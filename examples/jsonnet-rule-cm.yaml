@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jsonnet-rule-cm
+  namespace: default
+  labels:
+    prometheus_rule_jsonnet: "1"
+  annotations:
+    prometheus_label: "prometheus_rule=1"
+data:
+  example-rule.jsonnet: |-
+    {
+      newRuleGroup(name):: {
+        name: name,
+        rules: [],
+        alertFullName(name):: '%s%s' % ['TEST_ALERT', name],
+
+        local escapeDoubleBrackets(string) =
+          std.strReplace(
+            std.strReplace(
+              std.strReplace(
+                std.strReplace(
+                  string, '{{', '{{`{{'
+                ), '}}', '}}`}}'
+              ), '{{`{{', '{{`{{`}}'
+            ), '}}`}}', '{{`}}`}}'
+          ),
+
+        addAlert(name, message, expr, operator, threshold, severity):: self {
+          local ruleGroup = self,
+          rules+: [{
+            alert: ruleGroup.alertFullName(name),
+            annotations: {
+              message: escapeDoubleBrackets(message),
+            },
+            expr: '%s %s %s' % [expr, operator, threshold],
+            'for': '5m',
+            labels: {
+              severity: severity,
+            },
+          }],
+        },
+
+        thresholdExpression(alertName, severity, default)::
+          '%s' % default,
+
+        addAlertPair(name, message, expr, thresholds)::
+          self
+          .addAlert(name, message, expr, thresholds.operator, self.thresholdExpression(name, 'critical', thresholds.critical), 'critical')
+          .addAlert(name, message, expr, thresholds.operator, self.thresholdExpression(name, 'warning', thresholds.warning), 'warning'),
+
+      },
+      groups: [
+        $.newRuleGroup('JSONNET_RULE')
+        .addAlertPair(
+          name='NodesHealthHighHighHigh2',
+          message='"TEST: Node Health Low%',
+          expr='round(sum(kube_node_info) by (job, node) / (sum(kube_node_info) by (job, node) + sum(kube_node_spec_unschedulable) by (job, node) + sum(kube_node_status_condition{condition="DiskPressure", status="true"}) by (job, node) + sum(kube_node_status_condition{condition="MemoryPressure", status="true"}) by (job, node) ) * 100)',
+          thresholds={ operator: '<', warning: 99, critical: 95 }
+        ),
+      ],
+    }

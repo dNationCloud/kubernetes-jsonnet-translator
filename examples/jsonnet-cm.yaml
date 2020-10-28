@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: default
+  name: jsonnet-cm
+  labels:
+    grafana_dashboard_jsonnet: "1"
+  annotations:
+    grafana_label: "grafana_dashboard=1"
+data: 
+  example-dashboard.jsonnet: |-
+    local grafana = import 'grafonnet/grafana.libsonnet';
+    local dashboard = grafana.dashboard;
+    local prometheus = grafana.prometheus;
+    local template = grafana.template;
+    local statPanel = grafana.statPanel;
+
+      local upCount =
+        statPanel.new(
+          title='Up',
+          datasource='$datasource',
+        )
+        .addTarget(prometheus.target('sum(up{job="apiserver"})'));
+
+      local datasourceTemplate =
+        template.datasource(
+          query='prometheus',
+          name='datasource',
+          current=null,
+          label='Datasource',
+        );
+
+      dashboard.new(
+        'Example Dashboard',
+        editable=true,
+        refresh='10s',
+        time_from='now-5m',
+        uid='example-dashboard',
+      )
+      .addTemplates([datasourceTemplate, ])
+      .addPanels([upCount{ gridPos: { x: 0, y: 0, w: 6, h: 6 } }])

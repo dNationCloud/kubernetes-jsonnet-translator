@@ -1,0 +1,7 @@
+# External libs
+jsonnet_libs/*
+# IDE/Interpreter
+__pycache__/
+.idea/
+# Logs
+*.log

@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: default
+  name: jsonnet-ext-cm
+  labels:
+    grafana_dashboard_jsonnet: "1"
+  annotations:
+      ext_codes: |-
+        {
+         "editable": "true",
+         "panels": "[['panel1', 0, 0], ['panel2', 6, 0]]"
+        }
+      ext_vars: '{"dashboard_name": "Example dashboard with ext_vars 2"}'
+      max_trace: "8"
+      grafana_label: "grafana_dashboard=1"
+data:
+  example.libsonnet: |-
+    local grafana = import 'grafonnet/grafana.libsonnet';
+    local prometheus = grafana.prometheus;
+    local graphPanel = grafana.graphPanel;
+
+    {
+      cpu(title, x, y)::
+         graphPanel.new(
+           title=title,
+           datasource='$datasource',
+           min=0,
+         )
+        .addTarget(prometheus.target('rate(process_cpu_seconds_total{job="apiserver"}[5m])'))
+        + {gridPos: { x: x, y: y, w: 6, h: 6 }}
+    }
+
+  example-dashboard-ext.jsonnet: |-
+    local grafana = import 'grafonnet/grafana.libsonnet';
+    local lib = import 'example.libsonnet';
+    local dashboard = grafana.dashboard;
+    local prometheus = grafana.prometheus;
+    local template = grafana.template;
+    local statPanel = grafana.statPanel;
+    local graphPanel = grafana.graphPanel;
+
+    local upCount(title, x, y) =
+      statPanel.new(
+        title=title,
+        datasource='$datasource',
+      )
+      .addTarget(prometheus.target('sum(up{job="apiserver"})'))
+      + {gridPos: { x: x, y: y, w: 6, h: 6 }};
+
+    local upCountPanels = [ upCount(panel[0], panel[1], panel[2]) for panel in std.extVar('panels') ];
+    local cpuPanel = lib.cpu('CPU panel', 0, 6);
+
+    local datasourceTemplate =
+      template.datasource(
+        query='prometheus',
+        name='datasource',
+        current=null,
+        label='Datasource',
+      );
+
+    dashboard.new(
+      std.extVar('dashboard_name'),
+      editable=std.extVar('editable'),
+      refresh='10s',
+      time_from='now-5m',
+      uid='example-dashboard-ext',
+    )
+    .addTemplate(datasourceTemplate)
+    .addPanels(upCountPanels + [cpuPanel])
