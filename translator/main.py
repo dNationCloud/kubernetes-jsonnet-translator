@@ -193,7 +193,7 @@ def create_rules_object(args_, jsons, user_labels, user_annotations):
                 group, version, namespace, plural, name, prom_rules_object
             )
         except ApiException as e:
-            log.error(f"Error when replacing config map {name}, error {e}")
+            log.error(f"Error when replacing prometheus rule {name}, error {e}")
     else:
         try:
             coa.create_namespaced_custom_object(
@@ -340,6 +340,7 @@ def process_cm_binary_data(data, main_jsonnet, ext_libs=[], user_args={}):
             ".rar",
             ".xz",
         ]:
+            log.error(f"Unsupported compress format: {dataKey}")
             return
 
         archive_data = data[dataKey]

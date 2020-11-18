@@ -6,12 +6,11 @@ appropriate k8s objects are generated. Grafana dashboards and prometheus rules g
 
 ### Prerequisities
 
- - [Docker](https://www.docker.com/)
  
 
 ### Examples (outside k8s cluster)
 
-In order to run examples outside cluster uncomment [this line](sidecar/main/#L544).
+In order to run examples outside cluster uncomment [this line](translator/main/#L544).
 Install [jsonnet bundler](https://github.com/jsonnet-bundler/jsonnet-bundler) and run:
   ```
   mkdir jsonnet_libs

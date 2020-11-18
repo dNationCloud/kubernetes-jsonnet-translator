@@ -19,7 +19,7 @@ spec:
       - name: jsonnet-translator
         image: jsonnet-translator:latest
         imagePullPolicy: Never
-        command: ["python","-u","sidecar/main.py"]
+        command: ["python","-u","translator/main.py"]
         args: [
           "--libsonnet",
           "https://github.com/bitnami-labs/kube-libsonnet@2c48e8e3fb40e38461ba27b05a290877c1e39cec",
