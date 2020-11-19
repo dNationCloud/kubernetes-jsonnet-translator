@@ -236,11 +236,6 @@ def create_dashboard_cm(args_, jsons, user_labels, user_annotations):
     for filename, json_data in jsons:
         data[filename] = json.dumps(json_data)
 
-    # # Configure API key authorization: BearerToken
-    # kubernetes.client.configuration.api_key['authorization'] = 'YOUR_API_KEY'
-    # # Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
-    # # kubernetes.client.configuration.api_key_prefix['authorization'] = 'Bearer'
-
     metadata = client.V1ObjectMeta(name=name, namespace=namespace, labels=labels)
     body = client.V1ConfigMap(data=data, metadata=metadata)
 
