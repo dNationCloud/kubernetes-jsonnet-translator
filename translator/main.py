@@ -574,8 +574,8 @@ def main(args_):
     Return:
         None
     """
-    # test line (set env when running outside container)
-    # os.environ['LIBSONNET_PATH'] = './jsonnet_libs'
+    if args_.dev:
+        os.environ['LIBSONNET_PATH'] = './jsonnet_libs'
     install_dependencies(args.libsonnet)
 
     try:

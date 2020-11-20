@@ -2,8 +2,20 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into templates.
 
+## Override the default value of 'app' label used by k8s objects
+##
+nameOverride: ""
+
+## Provide a name to substitute for the full names of resources
+##
+fullnameOverride: ""
+
+## Set number of replicas of deployment
+##
 replicaCount: 1
 
+## Set properties of used image
+##
 image:
   repository: dnationcloud/jsonnet-translator
   pullPolicy: IfNotPresent
@@ -11,53 +23,50 @@ image:
   tag: ""
   # Arguments for translator container (see default_config.yaml and arg_parser.py for options)
   # args: [
+  #        '--namespace', 'default',
   #        '--libsonnet',
   #        'https://github.com/bitnami-labs/kube-libsonnet@2c48e8e3fb40e38461ba27b05a290877c1e39cec',
   #        'https://github.com/thelastpickle/grafonnet-polystat-panel@275a48de57afdac0d72219d82863d8ab8bd0e682',
   #    ]
 
-imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: "jsonnet-translator"
-
 ## Install RBAC roles and bindings
+##
 rbac:
   create: true
 
+## Set properties of service account
+##
 serviceAccount:
   # Specifies whether a service account should be created
   create: true
   # Annotations to add to the service account
   annotations: {}
 
+
+## Set annotations of pods
+##
 podAnnotations: {}
 
+## Set security context of pods
+##
 podSecurityContext: {}
-  # fsGroup: 2000
 
+## Set security context of deployment
+##
 securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
 
-
+## Set resources of pod
+##
 resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
 
+## Set node selectors of pod
+##
 nodeSelector: {}
 
+## Set tolerations of pod
+##
 tolerations: []
 
+## Set affinity of pod
+##
 affinity: {}

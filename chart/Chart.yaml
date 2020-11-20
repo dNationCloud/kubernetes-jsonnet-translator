@@ -3,7 +3,7 @@ name: jsonnet-translator
 type: application
 version: 0.1.0
 appVersion: 0.1.0
-description: Jsonnet translator is container intended to run inside a kubernetes cluster to collect and translates jsonnet resources to json.
+description: dNation Translator is a simple container for translating jsonnet content stored in k8s configmaps to **grafana dashboards** or **prometheus rules**.
 keywords:
   - jsonnet
   - json
@@ -16,4 +16,4 @@ home: https://dnation.cloud
 maintainers:
   - name: dnation
     email: cloud@dnation.cloud
-icon: https://cdn.ifne.eu/public/icons/jsonnet_translator.jpg
+icon: https://cdn.ifne.eu/public/icons/dnation_jsonnet_translator.png

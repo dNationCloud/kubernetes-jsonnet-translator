@@ -9,8 +9,9 @@ RUN apt-get update
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-COPY ./ .
-RUN pip3 install .
+RUN mkdir /app
+ADD ./ /app
+RUN pip3 install /app
 
 FROM python:3.8-slim
 LABEL Description="Container generates json resources from jsonnet resources (grafana dashboards, prometheus rules)"

@@ -82,4 +82,10 @@ def get_parser():
         help="URLs to libsonnet libs, divided by space",
     )
 
+    parser.add_argument(
+        "--dev",
+        action="store_true",
+        help="Set if running outside docker",
+    )
+
     return parser

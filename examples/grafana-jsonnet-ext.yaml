@@ -1,3 +1,5 @@
+# Example with build options for jsonnet compiler
+
 apiVersion: v1
 kind: ConfigMap
 metadata:
