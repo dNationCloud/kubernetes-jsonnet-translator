@@ -1,6 +1,6 @@
 # Example with jsonnet code in archive (suitable if you have complicated file structure)
 #
-# In order to correctly run this exmple you have to install following jsonnet depedencsies
+# In order to correctly run this exmple you have to install following jsonnet dependencies
 # with help of --libsonnet keyword argument of program (see helpers/README.md how to set folder
 # for dependencies if you run translator outside container):
 # --libsonnet https://github.com/grafana/grafonnet-lib/grafonnet@ff69572caf78c3163980d0d723c85a722eab73d9 \

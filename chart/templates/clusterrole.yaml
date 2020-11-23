@@ -2,9 +2,9 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ include "chart.fullname" . }}
+  name: {{ include "chart.name" . }}
   labels:
-    app: {{ include "chart.fullname" . }}
+    app: {{ include "chart.name" . }}
 rules:
 - apiGroups: ["*"]
   resources: ["configmaps", "prometheusrules"]

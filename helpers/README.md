@@ -39,3 +39,10 @@ kubectl desribe cm grafana-dashboards-generated
 If everything was installed correctly, described config map should contain grafana dashboard in JSON.
 
 More examples can be found in [examples](../examples) folder.
+
+
+## Installation in cluster without helm
+
+If you don't want to use helm, example of simple deployment, can be found [here](../examples/example-deployment.yaml). \
+(Depending on the cluster setup you might have to grant yourself admin rights first: 
+`kubectl create clusterrolebinding cluster-admin-binding --clusterrole cluster-admin --user`) 

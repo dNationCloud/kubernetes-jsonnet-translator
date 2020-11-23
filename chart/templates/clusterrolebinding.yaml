@@ -2,12 +2,12 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{ include "chart.fullname" . }}
+  name: {{ include "chart.name" . }}
   labels:
-    app: {{ include "chart.fullname" . }}
+    app: {{ include "chart.name" . }}
 roleRef:
   kind: ClusterRole
-  name: {{ include "chart.fullname" . }}
+  name: {{ include "chart.name" . }}
   apiGroup: rbac.authorization.k8s.io
 subjects:
 - kind: ServiceAccount
