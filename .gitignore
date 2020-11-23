@@ -5,3 +5,6 @@ __pycache__/
 .idea/
 # Logs
 *.log
+# Helm files
+chart/test/*
+chart/release/*
