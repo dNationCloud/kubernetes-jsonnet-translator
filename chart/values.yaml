@@ -28,6 +28,11 @@ image:
   #        'https://github.com/thelastpickle/grafonnet-polystat-panel@275a48de57afdac0d72219d82863d8ab8bd0e682',
   #    ]
 
+## Delete generated resources when chart is uninstalled
+##
+preDeleteHook:
+   enable: true
+
 ## Install RBAC roles and bindings
 ##
 rbac:

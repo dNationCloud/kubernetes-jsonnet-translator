@@ -1,4 +1,4 @@
-namespace: "default"
+target_namespace: "default"
 jsonnet_dashboards_selector: "grafana_dashboard_jsonnet=1"
 grafana_label: "grafana_label"
 jsonnet_rules_selector: "prometheus_rule_jsonnet=1"

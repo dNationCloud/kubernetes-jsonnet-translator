@@ -158,7 +158,7 @@ def delete_generated_resources(args_):
 
     rule_name = args_.prometheus_rules_object_name
     dash_name = args_.grafana_dashboards_cm_name
-    namespace = args_.namespace
+    namespace = args_.target_namespace
     group = "monitoring.coreos.com"
     version = "v1"
     plural = "prometheusrules"
@@ -196,7 +196,7 @@ def create_rules_object(args_, jsons, user_labels, user_annotations):
     coa = client.CustomObjectsApi()
 
     name = args_.prometheus_rules_object_name
-    namespace = args_.namespace
+    namespace = args_.target_namespace
     group = "monitoring.coreos.com"
     version = "v1"
     plural = "prometheusrules"
@@ -271,7 +271,7 @@ def create_dashboard_cm(args_, jsons, user_labels, user_annotations):
     v1 = client.CoreV1Api()
 
     name = args_.grafana_dashboards_cm_name
-    namespace = args_.namespace
+    namespace = args_.target_namespace
 
     labels = {}
     if len(jsons) > 0:

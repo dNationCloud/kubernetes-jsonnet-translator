@@ -31,9 +31,9 @@ def get_parser():
     )
 
     parser.add_argument(
-        "--namespace",
+        "--target_namespace",
         type=str,
-        default=defaults["namespace"],
+        default=defaults["target_namespace"],
         help="Namespace for generated objects, default: 'default'",
     )
 

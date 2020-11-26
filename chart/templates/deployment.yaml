@@ -35,6 +35,7 @@ spec:
             {{ range .Values.image.args }}
               - {{ . }}
             {{ end }}
+              - --target_namespace "{{- .Release.Namespace -}}"
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
