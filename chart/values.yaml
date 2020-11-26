@@ -25,7 +25,6 @@ image:
   # args: [
   #        '--namespace', 'default',
   #        '--libsonnet',
-  #        'https://github.com/bitnami-labs/kube-libsonnet@2c48e8e3fb40e38461ba27b05a290877c1e39cec',
   #        'https://github.com/thelastpickle/grafonnet-polystat-panel@275a48de57afdac0d72219d82863d8ab8bd0e682',
   #    ]
 

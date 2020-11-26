@@ -8,5 +8,5 @@ metadata:
 rules:
 - apiGroups: ["*"]
   resources: ["configmaps", "prometheusrules"]
-  verbs: ["get", "watch", "list", "create", "update"]
+  verbs: ["get", "watch", "list", "create", "update", "delete"]
 {{- end -}}

@@ -99,4 +99,10 @@ def get_parser():
         help="Set if running outside docker",
     )
 
+    parser.add_argument(
+        "--delete_resources",
+        action="store_true",
+        help="Set if want to program only to delete generated resources",
+    )
+
     return parser

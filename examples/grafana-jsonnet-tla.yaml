@@ -1,0 +1,51 @@
+# Example with build options for jsonnet compiler
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: default
+  name: jsonnet-tla-cm
+  labels:
+    grafana_dashboard_jsonnet: "1"
+  annotations:
+      tla_codes: |-
+        {'x': '{"subject": "TEST"}'}
+      grafana_label: "grafana_dashboard=1"
+data:
+  example-dashboard-tla.jsonnet: |-
+    local grafana = import 'grafonnet/grafana.libsonnet';
+    local dashboard = grafana.dashboard;
+    local prometheus = grafana.prometheus;
+    local template = grafana.template;
+    local statPanel = grafana.statPanel;
+
+
+    function(x)
+      local upCount(title1) =
+        statPanel.new(
+          title=title1,
+          datasource='$datasource',
+        )
+        .addTarget(prometheus.target('sum(up{job="apiserver"})'));
+
+      local datasourceTemplate =
+        template.datasource(
+          query='prometheus',
+          name='datasource',
+          current=null,
+          label='Datasource',
+        );
+
+      local dash =
+        dashboard.new(
+          'Example Dashboard',
+          editable=true,
+          refresh='10s',
+          time_from='now-5m',
+          uid='example-dashboard',
+        )
+        .addTemplates([datasourceTemplate, ])
+        .addPanels([upCount(x.subject){ gridPos: { x: 0, y: 0, w: 6, h: 6 } }]);
+      {
+        'dashboard.json': dash,
+      }

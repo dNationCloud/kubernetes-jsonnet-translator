@@ -29,7 +29,7 @@ COPY --from=python-builder /opt/venv /opt/venv
 
 RUN mkdir jsonnet_libs && cd jsonnet_libs && \
     jb init && \
-    jb install https://github.com/grafana/grafonnet-lib/grafonnet@ff69572caf78c3163980d0d723c85a722eab73d9
+    jb install https://github.com/grafana/grafonnet-lib/grafonnet@005390f0207ffa4a8ae0d1afb253b7585ff7beca
 
 RUN chmod -R 777 /app
 

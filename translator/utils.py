@@ -46,7 +46,7 @@ def remove_file(folder, filename):
     complete_filepath = os.path.join(folder, filename)
     try:
         os.remove(complete_filepath)
-        log.info(f"File {complete_filepath} deleted")
+        log.debug(f"File {complete_filepath} deleted")
     except FileNotFoundError:
         log.error(f"Error when removing {complete_filepath}: file not found")
     except OSError as e:
@@ -64,7 +64,7 @@ def remove_folder(folder):
     """
     try:
         shutil.rmtree(folder)
-        log.info(f"Folder {folder} deleted")
+        log.debug(f"Folder {folder} deleted")
     except OSError as e:
         log.error(f"Error when removing folder {folder}, error: {e}")
 
@@ -104,7 +104,7 @@ def save_text_to_file(folder, filename, text):
             sha256_hash_cur = hashlib.sha256(f.read())
 
         if sha256_hash_new.hexdigest() == sha256_hash_cur.hexdigest():
-            log.info(
+            log.debug(
                 f"Content of {complete_filepath} haven't changed."
                 f" Not overwriting existing file."
             )
@@ -115,7 +115,7 @@ def save_text_to_file(folder, filename, text):
             os.makedirs(folder)
         with open(complete_filepath, "w") as f:
             f.write(text)
-            log.info(f"File {complete_filepath} created")
+            log.debug(f"File {complete_filepath} created")
     except (OSError, IOError) as e:
         log.error(f"Error when creating dashboard {complete_filepath}, error: {e}")
 
