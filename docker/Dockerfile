@@ -14,6 +14,9 @@ ADD ./ /app
 RUN pip3 install /app
 
 FROM python:3.8-slim
+
+LABEL Version="0.1.0"
+LABEL Vendor="dNation"
 LABEL Description="Container generates json resources from jsonnet resources (grafana dashboards, prometheus rules)"
 
 RUN mkdir /app

@@ -1,0 +1,38 @@
+name: Tag code for docker image to release
+
+on:
+  push:
+    branches:
+    - main
+    # Only if there are changes to release.
+    paths:
+    - 'docker/Dockerfile'
+    - 'translator/**'
+    - 'setup.py'
+    - 'default_config.yaml'
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Fetch history
+      run: git fetch --prune --unshallow
+
+    - name: Get CI/CD docker code version
+      id: version
+      run: |
+        version=$(grep 'LABEL Version=' docker/Dockerfile | sed 's/LABEL Version="\(.*\)".*/\1/')
+        echo "::set-output name=version::$version"
+    - name: Configure Git
+      run: |
+        git config --global user.name "$GITHUB_ACTOR"
+        git config --global user.email "$GITHUB_ACTOR@users.noreply.github.com"
+    - name: Tag branch
+      uses: anothrNick/github-tag-action@1.26.0
+      env:
+        GITHUB_TOKEN: ${{ secrets.CICD_TOKEN }}
+        CUSTOM_TAG: 'image-v${{ steps.version.outputs.version }}'
+        RELEASE_BRANCHES: main
