@@ -17,7 +17,7 @@ replicaCount: 1
 ## Set properties of used image
 ##
 image:
-  repository: dnationcloud/dnation-jsonnet-translator
+  repository: dnationcloud/jsonnet-translator
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
