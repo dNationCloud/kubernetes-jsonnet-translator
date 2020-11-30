@@ -13,8 +13,13 @@ import logging
 import logging.handlers
 import sys
 
+LOGGER_NAME = "translator"
 log_format = "%(asctime)s - [%(levelname)-5s] - %(message)s"
 FORMATTER = logging.Formatter(log_format)
+
+
+def get_logger():
+    return logging.getLogger(LOGGER_NAME)
 
 
 def get_console_handler():
@@ -23,9 +28,8 @@ def get_console_handler():
     return console_handler
 
 
-def get_logger(logger_name):
-    logger = logging.getLogger(logger_name)
-    logger.setLevel(logging.DEBUG)
+def set_logger(level):
+    logger = logging.getLogger(LOGGER_NAME)
+    logger.setLevel(level)
     logger.addHandler(get_console_handler())
     logger.propagate = False
-    return logger

@@ -19,7 +19,7 @@ import shutil
 from datetime import datetime
 
 
-log = logger.get_logger(__name__)
+log = logger.get_logger()
 
 
 def timestamp():

@@ -27,7 +27,7 @@ from urllib3.exceptions import ProtocolError
 from urllib3.exceptions import MaxRetryError
 
 
-log = logger.get_logger(__name__)
+log = logger.get_logger()
 
 
 def parse_json_with_files(input_filepath):
@@ -409,6 +409,7 @@ def process_cm_binary_data(name, data, main_jsonnet, ext_libs=[], user_args={}):
             )
         except RuntimeError as e:
             log.error(f"{main_jsonnet} is not a valid jsonnet, raised error: {e}")
+            utils.remove_folder(tmp_folder_name)
             raise JsonnetConfigMapError
         else:
             utils.save_text_to_file("./", tmp_file_name, json_)
@@ -666,4 +667,5 @@ def main(args_):
 
 if __name__ == "__main__":
     args = get_parser().parse_args()
+    logger.set_logger(args.log.upper())
     main(args)

@@ -9,8 +9,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from argparse import ArgumentParser
 import yaml
+import logging
+from argparse import ArgumentParser
 
 
 def get_defaults():
@@ -97,6 +98,13 @@ def get_parser():
         "--dev",
         action="store_true",
         help="Set if running outside docker",
+    )
+
+    parser.add_argument(
+        "--log",
+        choices=logging._nameToLevel.keys(),
+        default=defaults["log"],
+        help="Set logging level, default: info",
     )
 
     parser.add_argument(
