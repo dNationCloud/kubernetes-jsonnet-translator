@@ -23,7 +23,6 @@ image:
   tag: ""
   # Arguments for translator container (see default_config.yaml and arg_parser.py for options)
   # args: [
-  #        '--namespace', 'default',
   #        '--libsonnet',
   #        'https://github.com/thelastpickle/grafonnet-polystat-panel@275a48de57afdac0d72219d82863d8ab8bd0e682',
   #    ]

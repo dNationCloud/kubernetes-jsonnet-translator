@@ -33,10 +33,12 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["python","-u","translator/main.py"]
           args:
-            {{ range .Values.image.args }}
-            - {{ . }}
-            {{ end }}
             - --delete_resources
+            - --target_namespace
+            - "{{- .Release.Namespace -}}"
+          {{ range .Values.image.args }}
+            - {{ . }}
+          {{ end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
