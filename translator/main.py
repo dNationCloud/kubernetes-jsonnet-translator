@@ -543,10 +543,14 @@ def watch_loop(args_, label_selector):
             watch_changes(args_, label_selector)
 
         except ApiException as e:
-            if e.status != 500:
-                log.error(f"ApiException when calling kubernetes: {e}")
-            else:
+            # Too old resource version (from watch.stream())
+            if e.status == 410:
+                pass
+            # Internal server error
+            elif e.status == 500:
                 raise
+            else:
+                log.error(f"ApiException when calling kubernetes: {e}")
 
         except ProtocolError as e:
             log.error(f"ProtocolError when calling kubernetes: {e}")
