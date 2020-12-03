@@ -3,7 +3,8 @@ name: Release Chart
 on:
   push:
     branches:
-    - main
+    - github_cicd
+    #- main
     # Only if there are chart changes to release.
     paths:
     - 'chart/**'
@@ -46,4 +47,4 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.CICD_TOKEN }}
         CUSTOM_TAG: 'v${{ steps.version.outputs.chart }}'
-        RELEASE_BRANCHES: main
+        RELEASE_BRANCHES: github_cicd #main

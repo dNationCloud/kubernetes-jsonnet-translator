@@ -3,7 +3,8 @@ name: Tag code for docker image to release
 on:
   push:
     branches:
-    - main
+    - github_cicd
+    #- main
     # Only if there are changes to release.
     paths:
     - 'docker/Dockerfile'
@@ -49,4 +50,4 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.CICD_TOKEN }}
         CUSTOM_TAG: 'image-v${{ steps.version.outputs.version }}'
-        RELEASE_BRANCHES: main
+        RELEASE_BRANCHES: github_cicd #main
