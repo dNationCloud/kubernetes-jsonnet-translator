@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: dnation-jsonnet-translator
+  name: dnation-kubernetes-jsonnet-translator
   labels:
-    app: dnation-jsonnet-translator
+    app: dnation-kubernetes-jsonnet-translator
 spec:
   selector:
     matchLabels:
-      app: dnation-jsonnet-translator
+      app: dnation-kubernetes-jsonnet-translator
   replicas: 1
   template:
     metadata:
       labels:
-        app: dnation-jsonnet-translator
+        app: dnation-kubernetes-jsonnet-translator
     spec:
       serviceAccountName: sample-acc
       containers:
-      - name: dnation-jsonnet-translator
-        image: dnation-jsonnet-translator:latest
+      - name: dnation-kubernetes-jsonnet-translator
+        image: dnation-kubernetes-jsonnet-translator:latest
         imagePullPolicy: Never
         command: ["python","-u","translator/main.py"]
         args: [
