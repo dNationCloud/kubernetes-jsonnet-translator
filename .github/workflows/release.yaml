@@ -24,6 +24,7 @@ jobs:
       run: |
         chart=$(grep "version" chart/Chart.yaml | head -1 | awk '{print $2}')
         echo "::set-output name=chart::$chart"
+
     - name: Configure Git
       run: |
         git config --global user.name "$GITHUB_ACTOR"
