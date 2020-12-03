@@ -23,8 +23,8 @@ RUN mkdir /app
 WORKDIR /app
 ADD ./ /app/
 
-RUN groupadd jsonnet-translator && \
-    useradd --gid jsonnet-translator jsonnet-translator
+RUN groupadd kubernetes-jsonnet-translator && \
+    useradd --gid kubernetes-jsonnet-translator kubernetes-jsonnet-translator
 
 COPY --from=go-builder /go/bin/jb /usr/local/bin/jb
 COPY --from=go-builder /lib/* /lib/
@@ -39,6 +39,6 @@ RUN chmod -R 777 /app
 ENV LIBSONNET_PATH=/app/jsonnet_libs
 ENV PATH="/opt/venv/bin:$PATH"
 
-USER jsonnet-translator
+USER kubernetes-jsonnet-translator
 
 CMD ["python","-u","translator/main.py"]

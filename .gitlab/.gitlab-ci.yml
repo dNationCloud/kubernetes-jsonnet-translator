@@ -52,4 +52,4 @@ test install translator:
   extends: .test-install
   script:
     - kind create cluster --config helpers/kind_cluster_config.yaml --image kindest/node:v1.19.1
-    - helm install translator chart/release/dnation-jsonnet-translator-*.tgz
+    - helm install translator chart/release/dnation-kubernetes-jsonnet-translator-*.tgz

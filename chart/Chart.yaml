@@ -1,5 +1,5 @@
 apiVersion: v2
-name: dnation-jsonnet-translator
+name: dnation-kubernetes-jsonnet-translator
 type: application
 version: 0.1.1
 appVersion: 0.1.1

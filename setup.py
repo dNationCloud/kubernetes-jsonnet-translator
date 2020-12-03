@@ -21,7 +21,7 @@ install_requires = [
 
 
 setup(
-    name="jsonnet_k8s_translator",
+    name="kubernetes-jsonnet-translator",
     description="Generates json resources from jsonnet resources",
     author="dnation",
     author_email="david.suba@dnation.cloud",
