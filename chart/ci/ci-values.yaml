@@ -1,4 +1,5 @@
-# Default values for Jsonnet Translator.
+# Values for chart-testing in github CI/CD pipeline.
+# https://github.com/helm/chart-testing/blob/master/doc/ct_install.md
 # This is a YAML-formatted file.
 # Declare variables to be passed into templates.
 
@@ -18,14 +19,9 @@ replicaCount: 1
 ##
 image:
   repository: dnationcloud/kubernetes-jsonnet-translator
-  pullPolicy: IfNotPresent
+  pullPolicy: Never
   # Overrides the image tag whose default is the chart appVersion.
-  tag: ""
-  # Arguments for translator container (see default_config.yaml and arg_parser.py for options)
-  # args: [
-  #        '--libsonnet',
-  #        'https://github.com/thelastpickle/grafonnet-polystat-panel@275a48de57afdac0d72219d82863d8ab8bd0e682',
-  #    ]
+  tag: "test"
 
 ## Delete generated resources when chart is uninstalled
 ##
