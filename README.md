@@ -1,6 +1,6 @@
 <a href="https://dNation.cloud/"><img src="https://cdn.ifne.eu/public/icons/dnation.png" width="250" alt="dNationCloud"></a>
 
-# dNation Jsonnet Translator
+# dNation Kubernetes Jsonnet Translator
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Artifact HUB](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/dnationcloud)](https://artifacthub.io/packages/search?repo=dnationcloud)
@@ -17,7 +17,7 @@ Jsonnet configmap is afterwards evaluated and appropriate k8s objects are genera
 Prerequisites
  - [Helm3](https://helm.sh/)
  
-dNation Jsonnet Translator Chart is hosted in the [dNation helm repository](https://artifacthub.io/packages/search?repo=dnationcloud).
+dNation Kubernetes Jsonnet Translator Chart is hosted in the [dNation helm repository](https://artifacthub.io/packages/search?repo=dnationcloud).
 
 ```bash
 # Add dNation helm repository
@@ -25,7 +25,7 @@ helm repo add dnationcloud https://dnationcloud.github.io/helm-hub/
 helm repo update
 
 # Install dNation Jsonnet Translator
-helm install dnation-jsonnet-translator dnationcloud/dnation-jsonnet-translator
+helm install dnation-kubernetes-jsonnet-translator dnationcloud/dnation-kubernetes-jsonnet-translator
 ```
 
 Examples how to test if everything is working correctly can be found in [examples](./examples) folder.

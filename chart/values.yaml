@@ -17,7 +17,7 @@ replicaCount: 1
 ## Set properties of used image
 ##
 image:
-  repository: dnationcloud/jsonnet-translator
+  repository: dnationcloud/kubernetes-jsonnet-translator
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
