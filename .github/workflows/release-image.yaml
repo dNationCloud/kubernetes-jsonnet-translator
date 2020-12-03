@@ -26,15 +26,13 @@ jobs:
       run: |
         version=$(grep 'LABEL Version=' docker/Dockerfile | sed 's/LABEL Version="\(.*\)".*/\1/')
         echo "::set-output name=version::$version"
-
     - name: Get helm chart application version
       id: helm-app-version
       run: |
         app=$(grep "appVersion" chart/Chart.yaml | head -1 | awk '{print $2}')
         echo "::set-output name=app-version::$app"
-
     - name: Check if helm chart application version equals docker version
-      uses: nick-invision@assert-action@v1
+      uses: nick-invision/assert-action@v1
       with:
         expected: ${{ steps.version.outputs.version }}
         actual: ${{ steps.helm-app-version.outputs.app-version }}
@@ -43,7 +41,6 @@ jobs:
       run: |
         git config --global user.name "$GITHUB_ACTOR"
         git config --global user.email "$GITHUB_ACTOR@users.noreply.github.com"
-
     - name: Tag branch
       uses: anothrNick/github-tag-action@1.26.0
       env:
