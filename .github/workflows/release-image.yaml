@@ -34,11 +34,11 @@ jobs:
         app=$(grep "appVersion" chart/Chart.yaml | head -1 | awk '{print $2}')
         echo "::set-output name=app-version::$app"
 
-    - name: Check if helm chart application version equals docker version
-      uses: nick-invision@assert-action@v1
-      with:
-        expected: ${{ steps.version.outputs.version }}
-        actual: ${{ steps.helm-app-version.outputs.app-version }}
+#    - name: Check if helm chart application version equals docker version
+#      uses: nick-invision@assert-action@v1
+#      with:
+#        expected: ${{ steps.version.outputs.version }}
+#        actual: ${{ steps.helm-app-version.outputs.app-version }}
 
     - name: Configure Git
       run: |
