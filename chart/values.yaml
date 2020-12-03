@@ -30,7 +30,7 @@ image:
 ## Delete generated resources when chart is uninstalled
 ##
 preDeleteHook:
-   enable: true
+  enable: true
 
 ## Install RBAC roles and bindings
 ##
