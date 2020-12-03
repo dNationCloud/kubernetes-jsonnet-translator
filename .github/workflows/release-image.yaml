@@ -35,7 +35,7 @@ jobs:
         echo "::set-output name=app-version::$app"
 
     - name: Check if helm chart application version equals docker version
-      uses: nick-invision@assert-action@v1
+      uses: nick-invision/assert-action@v1
       with:
         expected: ${{ steps.version.outputs.version }}
         actual: ${{ steps.helm-app-version.outputs.app-version }}
