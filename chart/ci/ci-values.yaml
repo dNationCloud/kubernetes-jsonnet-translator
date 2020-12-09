@@ -1,0 +1,71 @@
+# Values for chart-testing in github CI/CD pipeline.
+# https://github.com/helm/chart-testing/blob/master/doc/ct_install.md
+# This is a YAML-formatted file.
+# Declare variables to be passed into templates.
+
+## Override the default value of 'app' label used by k8s objects
+##
+nameOverride: ""
+
+## Provide a name to substitute for the full names of resources
+##
+fullnameOverride: ""
+
+## Set number of replicas of deployment
+##
+replicaCount: 1
+
+## Set properties of used image
+##
+image:
+  repository: dnationcloud/kubernetes-jsonnet-translator
+  pullPolicy: Never
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "test"
+
+## Delete generated resources when chart is uninstalled
+##
+preDeleteHook:
+  enable: true
+
+## Install RBAC roles and bindings
+##
+rbac:
+  create: true
+
+## Set properties of service account
+##
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+
+
+## Set annotations of pods
+##
+podAnnotations: {}
+
+## Set security context of pods
+##
+podSecurityContext: {}
+
+## Set security context of deployment
+##
+securityContext: {}
+
+## Set resources of pod
+##
+resources: {}
+
+## Set node selectors of pod
+##
+nodeSelector: {}
+
+## Set tolerations of pod
+##
+tolerations: []
+
+## Set affinity of pod
+##
+affinity: {}
