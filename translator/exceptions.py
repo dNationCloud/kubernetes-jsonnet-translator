@@ -11,3 +11,7 @@
 
 class JsonnetConfigMapError(Exception):
     pass
+
+
+class RetryException(Exception):
+    pass

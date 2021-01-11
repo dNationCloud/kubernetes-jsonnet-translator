@@ -17,6 +17,7 @@ install_requires = [
     "kubernetes==12.0.*",
     "patool==1.12",
     "urllib3==1.25.*",
+    "tenacity==6.3.*"
 ]
 
 
