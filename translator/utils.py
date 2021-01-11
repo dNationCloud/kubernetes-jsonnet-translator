@@ -22,6 +22,22 @@ from datetime import datetime
 log = logger.get_logger()
 
 
+def after_retry(retry_state):
+    """Ignore exception after last retry.
+
+    Use as callback for tenacity.retry_error_callback. After last retry
+    no exception is raised.
+
+    Args:
+        retry_state (tenacity.RetryCallState): State from tenacity module.
+
+    Returns:
+        None
+
+    """
+    pass
+
+
 def timestamp():
     """Returns current timestamp in format [YYYY-MM-DD hh:mm:ss].
 
