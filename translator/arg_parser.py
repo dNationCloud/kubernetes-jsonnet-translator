@@ -28,7 +28,7 @@ def get_parser():
 
     parser = ArgumentParser(
         description="Jsonnet translator, for creating grafana dashboards "
-                    "and prometheus rules from jsonnet."
+        "and prometheus rules from jsonnet."
     )
 
     parser.add_argument(
@@ -43,7 +43,7 @@ def get_parser():
         type=str,
         default=defaults["jsonnet_dashboards_selector"],
         help="Selector of dashboards jsonnet config maps in format: "
-             "'<label>=<value>', default: 'grafana_dashboard_jsonnet=1'",
+        "'<label>=<value>', default: 'grafana_dashboard_jsonnet=1'",
     )
 
     parser.add_argument(
@@ -51,7 +51,7 @@ def get_parser():
         type=str,
         default=defaults["jsonnet_rules_selector"],
         help="Selector of rules jsonnet config maps in format: "
-             "'<label>=<value>', default: 'prometheus_rule_jsonnet=1'",
+        "'<label>=<value>', default: 'prometheus_rule_jsonnet=1'",
     )
 
     parser.add_argument(
@@ -59,7 +59,7 @@ def get_parser():
         type=str,
         default=defaults["grafana_dashboards_cm_name"],
         help="Name of config map with generated dashboards, "
-             "default: 'grafana-dashboards-generated'",
+        "default: 'grafana-dashboards-generated'",
     )
 
     parser.add_argument(
@@ -67,7 +67,7 @@ def get_parser():
         type=str,
         default=defaults["prometheus_rules_object_name"],
         help="Name of prometheus rules object with generated rules, "
-             "default: 'prometheus-rules-generated'",
+        "default: 'prometheus-rules-generated'",
     )
 
     parser.add_argument(
@@ -75,7 +75,7 @@ def get_parser():
         type=str,
         default=defaults["grafana_label"],
         help="Field in annotations, which defines label of grafana dashboards "
-             "in format: '<label>=<value>', default: 'grafana_label'",
+        "in format: '<label>=<value>', default: 'grafana_label'",
     )
 
     parser.add_argument(
@@ -83,7 +83,7 @@ def get_parser():
         type=str,
         default=defaults["prometheus_label"],
         help="Field in annotations, which defines label of prometheus rules "
-             "in format: '<label>=<value>', default: 'prometheus_label'",
+        "in format: '<label>=<value>', default: 'prometheus_label'",
     )
 
     parser.add_argument(
