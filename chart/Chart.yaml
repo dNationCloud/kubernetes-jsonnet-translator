@@ -2,7 +2,7 @@ apiVersion: v2
 name: dnation-kubernetes-jsonnet-translator
 type: application
 version: 0.1.2
-appVersion: 0.1.2
+appVersion: 0.1.3
 description: dNation Translator is a simple container for translating jsonnet content stored in k8s configmaps to **grafana dashboards** or **prometheus rules**.
 keywords:
   - jsonnet
