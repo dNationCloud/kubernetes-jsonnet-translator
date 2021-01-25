@@ -72,14 +72,14 @@ def get_config_maps(label_selector):
     return config_maps
 
 
-def get_jsonnet_keywords_args(annotations):
-    """Tries keyword args to jsonnet build provided by user.
+def group_annotations(annotations):
+    """Divide annotations to build arguments for jsonnet and remaining annotations.
 
     Args:
         annotations (dict of str: str):  Annotations from jsonnet configmap.
 
     Returns:
-        dict: valid keyword arguments with eval values.
+        (dict, dict): Dicts with annotations that are jsonnet build args and rest.
     """
     supported_args = [
         "max_stack",
@@ -91,14 +91,31 @@ def get_jsonnet_keywords_args(annotations):
         "tla_codes",
         "max_trace",
     ]
-    valid_args = {}
+    build_anns, other_anns = {}, {}
     for key, value in annotations.items():
-        if key not in supported_args:
-            continue
+        if key in supported_args:
+            build_anns[key] = value
+        else:
+            other_anns[key] = value
+
+    return build_anns, other_anns
+
+
+def evaluate_jsonnet_build_annotations(annotations):
+    """Evaluates jsonnet build annotations.
+
+    Args:
+        annotations (dict of str: str):  Annotations from jsonnet configmap.
+
+    Returns:
+        dict: Valid jsonnet build arguments with evaluated values.
+    """
+    evaluated_args = {}
+    for key, value in annotations.items():
         try:
             evaluated_arg = ast.literal_eval(value)
             _jsonnet.evaluate_snippet("dummy", "{}", **{key: evaluated_arg})
-            valid_args[key] = evaluated_arg
+            evaluated_args[key] = evaluated_arg
         except TypeError as e:
             log.error(f"Build argument from annotations {key} is invalid, error: {e}")
         except json.decoder.JSONDecodeError as e:
@@ -106,17 +123,17 @@ def get_jsonnet_keywords_args(annotations):
                 f"Evaluation of build argument {key} from annotations failed,"
                 f" error: {e}"
             )
+    return evaluated_args
 
-    return valid_args
 
-
-def get_labels(
+def update_metadata(
     user_labels, user_annotations, old_label_selector, new_selector_annotation
 ):
-    """Replaces label selectors.
+    """Updates labels and annotations.
 
     Deletes old label selector from labels and adds new one,
-    defined in annotations by new_selector_annotation.
+    defined in annotations by new_selector_annotation. Other labels
+    and annotations are just copied.
 
     Args:
         user_labels (dict):  Labels of kubernetes object.
@@ -127,7 +144,7 @@ def get_labels(
             label selector is stored.
 
     Returns:
-        dict: updated labels.
+        (dict, dict): updated labels and annotations.
     """
     try:
         key, _ = old_label_selector.split("=")
@@ -144,9 +161,10 @@ def get_labels(
     except ValueError:
         log.error(f"Label for kubernetes object is invalid: {new_selector_annotation}")
     else:
+        user_annotations.pop(new_selector_annotation)
         user_labels[key] = value
 
-    return user_labels
+    return user_labels, user_annotations
 
 
 @retry(
@@ -227,8 +245,9 @@ def create_rules_object(args_, jsons, user_labels, user_annotations):
     plural = "prometheusrules"
 
     labels = {}
+    annotations = {}
     if len(jsons) > 0:
-        labels = get_labels(
+        labels, annotations = update_metadata(
             user_labels,
             user_annotations,
             args_.jsonnet_rules_selector,
@@ -243,6 +262,7 @@ def create_rules_object(args_, jsons, user_labels, user_annotations):
         "name": name,
         "namespace": namespace,
         "labels": labels,
+        "annotations": annotations,
     }
 
     prom_rules_object = {
@@ -307,8 +327,9 @@ def create_dashboard_cm(args_, jsons, user_labels, user_annotations):
     namespace = args_.target_namespace
 
     labels = {}
+    annotations = {}
     if len(jsons) > 0:
-        labels = get_labels(
+        labels, annotations = update_metadata(
             user_labels,
             user_annotations,
             args_.jsonnet_dashboards_selector,
@@ -319,7 +340,9 @@ def create_dashboard_cm(args_, jsons, user_labels, user_annotations):
     for filename, json_data in jsons:
         data[filename] = json.dumps(json_data)
 
-    metadata = client.V1ObjectMeta(name=name, namespace=namespace, labels=labels)
+    metadata = client.V1ObjectMeta(
+        name=name, namespace=namespace, labels=labels, annotations=annotations
+    )
     body = client.V1ConfigMap(data=data, metadata=metadata)
 
     log.info(f"Regenerating dashboards resource {name}")
@@ -457,7 +480,7 @@ def process_cm_binary_data(name, data, main_jsonnet, ext_libs=[], user_args={}):
     return jsons
 
 
-def regenerate_jsonnets_resources(args_, label_selector):
+def regenerate_jsonnet_resources(args_, label_selector):
     """Process jsonnet configMap depending on content.
 
     Args:
@@ -482,11 +505,11 @@ def regenerate_jsonnets_resources(args_, label_selector):
 
         log.info(f"Processing object: {config_map.metadata.name}")
 
-        jsonnet_keywords_args = get_jsonnet_keywords_args(
-            config_map.metadata.annotations
-        )
+        build_anns, other_anns = group_annotations(config_map.metadata.annotations)
+        jsonnet_build_args = evaluate_jsonnet_build_annotations(build_anns)
+
         labels.update(config_map.metadata.labels or {})
-        annotations.update(config_map.metadata.annotations or {})
+        annotations.update(other_anns or {})
 
         if config_map.data is not None:
             try:
@@ -494,7 +517,7 @@ def regenerate_jsonnets_resources(args_, label_selector):
                     process_cm_data(
                         config_map.data,
                         external_libraries_paths,
-                        jsonnet_keywords_args,
+                        jsonnet_build_args,
                     )
                 )
             except JsonnetConfigMapError:
@@ -516,7 +539,7 @@ def regenerate_jsonnets_resources(args_, label_selector):
                             config_map.binary_data,
                             main_jsonnet,
                             external_libraries_paths,
-                            jsonnet_keywords_args,
+                            jsonnet_build_args,
                         )
                     )
                 except JsonnetConfigMapError:
@@ -551,7 +574,7 @@ def watch_changes(args_, label_selector):
         resource_version=resource_version,
     ):
         log.info(f"Event: {event['type']} {event['object'].metadata.name}")
-        regenerate_jsonnets_resources(args_, label_selector)
+        regenerate_jsonnet_resources(args_, label_selector)
 
 
 def watch_loop(args_, label_selector):
@@ -572,7 +595,7 @@ def watch_loop(args_, label_selector):
             time.sleep(5)
 
             if initial_run:
-                regenerate_jsonnets_resources(args_, label_selector)
+                regenerate_jsonnet_resources(args_, label_selector)
                 initial_run = False
 
             watch_changes(args_, label_selector)
