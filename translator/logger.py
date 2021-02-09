@@ -13,23 +13,39 @@ import logging
 import logging.handlers
 import sys
 
+from pythonjsonlogger import jsonlogger
+
+
 LOGGER_NAME = "translator"
-log_format = "%(asctime)s - [%(levelname)-5s] - %(message)s"
-FORMATTER = logging.Formatter(log_format)
+LOG_FORMAT = "%(asctime)s - [%(levelname)-5s] - %(message)s"
+FORMATTER = {
+    "default": logging.Formatter(LOG_FORMAT),
+    "json": jsonlogger.JsonFormatter(LOG_FORMAT),
+}
 
 
 def get_logger():
     return logging.getLogger(LOGGER_NAME)
 
 
-def get_console_handler():
+def get_console_handler(formatter):
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setFormatter(FORMATTER)
+    console_handler.setFormatter(formatter)
     return console_handler
 
 
-def set_logger(level):
+def set_logger(level, format):
+    """Sets the threshold for the logger to defined level and format
+
+    Args:
+        level (str): Logger threshold.
+        format (str): Logger format.
+
+    Return:
+        None
+    """
+    formatter = FORMATTER[format]
     logger = logging.getLogger(LOGGER_NAME)
     logger.setLevel(level)
-    logger.addHandler(get_console_handler())
+    logger.addHandler(get_console_handler(formatter))
     logger.propagate = False

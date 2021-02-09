@@ -737,5 +737,5 @@ def main(args_):
 
 if __name__ == "__main__":
     args = get_parser().parse_args()
-    logger.set_logger(args.log.upper())
+    logger.set_logger(args.log.upper(), args.log_format)
     main(args)
