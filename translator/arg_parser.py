@@ -107,6 +107,12 @@ def get_parser():
         help=f'Set logging level, default: {defaults["log"]}',
     )
 
+    parser.add_argument(
+        "--log_format",
+        choices=["default", "json"],
+        default=defaults["log_format"],
+        help=f'Set logging format, default: {defaults["log_format"]}',
+    )
 
     parser.add_argument(
         "--delete_resources",

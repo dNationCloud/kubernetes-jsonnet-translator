@@ -18,6 +18,7 @@ install_requires = [
     "patool==1.12",
     "urllib3==1.25.*",
     "tenacity==6.3.*",
+    "python-json-logger==2.0.*",
 ]
 
 
