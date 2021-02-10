@@ -27,7 +27,7 @@ setup(
     description="Generates json resources from jsonnet resources",
     author="dnation",
     author_email="david.suba@dnation.cloud",
-    version="0.1.0",
+    version="0.2.0",
     python_requires=">=3.7",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
