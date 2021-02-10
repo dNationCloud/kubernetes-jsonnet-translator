@@ -19,6 +19,7 @@ import ast
 
 from multiprocessing import Process
 from arg_parser import get_parser
+from dataclasses import dataclass, field
 from exceptions import JsonnetConfigMapError, RetryException
 from subprocess import Popen, PIPE, TimeoutExpired
 from kubernetes import client, config, watch
@@ -35,6 +36,27 @@ from tenacity import (
 
 
 log = logger.get_logger()
+
+SUPPORTED_BUILD_ARGS = [
+    "max_stack",
+    "gc_min_objects",
+    "gc_growth_trigger",
+    "ext_vars",
+    "ext_codes",
+    "tla_vars",
+    "tla_codes",
+    "max_trace",
+]
+SUPPORTED_TRANSLATOR_ARGS = [
+    "grafana_dashboards_skip_update",
+]
+
+
+@dataclass
+class Annotations:
+    build: dict = field(default_factory=dict)
+    translator: dict = field(default_factory=dict)
+    other: dict = field(default_factory=dict)
 
 
 def parse_json_with_files(input_filepath):
@@ -73,32 +95,26 @@ def get_config_maps(label_selector):
 
 
 def group_annotations(annotations):
-    """Divide annotations to build arguments for jsonnet and remaining annotations.
+    """Divide annotations to build arguments for jsonnet build,
+    translator and remaining annotations.
 
     Args:
         annotations (dict of str: str):  Annotations from jsonnet configmap.
 
     Returns:
-        (dict, dict): Dicts with annotations that are jsonnet build args and rest.
+        Annotations: Annotations for jsonnet build, translator and rest.
     """
-    supported_args = [
-        "max_stack",
-        "gc_min_objects",
-        "gc_growth_trigger",
-        "ext_vars",
-        "ext_codes",
-        "tla_vars",
-        "tla_codes",
-        "max_trace",
-    ]
-    build_anns, other_anns = {}, {}
-    for key, value in annotations.items():
-        if key in supported_args:
-            build_anns[key] = value
-        else:
-            other_anns[key] = value
 
-    return build_anns, other_anns
+    anns = Annotations()
+    for key, value in annotations.items():
+        if key in SUPPORTED_BUILD_ARGS:
+            anns.build[key] = value
+        elif key in SUPPORTED_TRANSLATOR_ARGS:
+            anns.translator[key] = value
+        else:
+            anns.other[key] = value
+
+    return anns
 
 
 def evaluate_jsonnet_build_annotations(annotations):
@@ -272,8 +288,6 @@ def create_rules_object(args_, jsons, user_labels, user_annotations):
         "spec": {"groups": groups},
     }
 
-    log.info(f"Regenerating rules resource {name}")
-
     name_selector = f"metadata.name={name}"
     rules_objects = coa.list_namespaced_custom_object(
         group, version, namespace, plural, field_selector=name_selector
@@ -290,6 +304,7 @@ def create_rules_object(args_, jsons, user_labels, user_annotations):
         except ApiException as e:
             log.error(f"Error when replacing prometheus rule {name}, error {e}")
             raise RetryException
+        log.info(f"Rules resource {name} updated")
     else:
         try:
             coa.create_namespaced_custom_object(
@@ -298,6 +313,7 @@ def create_rules_object(args_, jsons, user_labels, user_annotations):
         except ApiException as e:
             log.error(f"Error when creating prometheus rule {name}, error {e}")
             raise RetryException
+        log.info(f"Rules resource {name} created")
 
 
 @retry(
@@ -306,10 +322,14 @@ def create_rules_object(args_, jsons, user_labels, user_annotations):
     stop=stop_after_attempt(6),
     retry_error_callback=utils.after_retry,
 )
-def create_dashboard_cm(args_, jsons, user_labels, user_annotations):
+def create_dashboard_cm(
+    args_, jsons, user_labels, user_annotations, translator_annotations
+):
     """Creates config map.
 
     Creates or replaces config map from json dashboards with provided metadata.
+    Json dashboards defined in `grafana_dashboards_skip_update`
+    annotation are skips in config map replacement.
 
     Args:
         args_ (argparse.Namespace): Args from ArgumentParser.
@@ -317,15 +337,21 @@ def create_dashboard_cm(args_, jsons, user_labels, user_annotations):
             (filename, dict from json).
         user_labels (dict):  Labels of kubernetes object.
         user_annotations (dict): Annotations of kubernetes object.
+        translator_annotations (dict): Translator specific annotations.
 
     Returns:
         None
     """
     v1 = client.CoreV1Api()
 
+    dashboards_skip = translator_annotations.get("grafana_dashboards_skip_update", [])
     name = args_.grafana_dashboards_cm_name
     namespace = args_.target_namespace
+    cms = v1.list_namespaced_config_map(
+        namespace, field_selector=f"metadata.name={name}"
+    )
 
+    # Compose ConfigMap
     labels = {}
     annotations = {}
     if len(jsons) > 0:
@@ -335,32 +361,38 @@ def create_dashboard_cm(args_, jsons, user_labels, user_annotations):
             args_.jsonnet_dashboards_selector,
             args_.grafana_label,
         )
-
     data = {}
     for filename, json_data in jsons:
+        if cms.items and filename in dashboards_skip:
+            log.info(f"Update of {filename} dashboard skipped")
+            continue
+
         data[filename] = json.dumps(json_data)
 
-    metadata = client.V1ObjectMeta(
-        name=name, namespace=namespace, labels=labels, annotations=annotations
+    configmap = client.V1ConfigMap(
+        data=data,
+        metadata=client.V1ObjectMeta(
+            name=name,
+            namespace=namespace,
+            labels=labels,
+            annotations=annotations,
+        ),
     )
-    body = client.V1ConfigMap(data=data, metadata=metadata)
-
-    log.info(f"Regenerating dashboards resource {name}")
-
-    name_selector = f"metadata.name={name}"
-    cms = v1.list_namespaced_config_map(namespace, field_selector=name_selector)
-    if len(cms.items) > 0:
+    # Create/Update ConfigMap
+    if cms.items:
         try:
-            v1.replace_namespaced_config_map(name, namespace, body)
+            v1.replace_namespaced_config_map(name, namespace, configmap)
         except ApiException as e:
             log.error(f"Error when replacing config map {name}, error {e}")
             raise RetryException
+        log.info(f"Dashboards resource {name} updated")
     else:
         try:
-            v1.create_namespaced_config_map(namespace, body)
+            v1.create_namespaced_config_map(namespace, configmap)
         except ApiException as e:
             log.error(f"Error when creating config map {name}, error {e}")
             raise RetryException
+        log.info(f"Dashboards resource {name} created")
 
 
 def process_cm_data(data, ext_libs=[], user_args={}):
@@ -499,17 +531,19 @@ def regenerate_jsonnet_resources(args_, label_selector):
     jsons = []
     labels = {}
     annotations = {}
+    translator_annotations = {}
 
     config_maps = get_config_maps(label_selector)
     for config_map in config_maps.items:
 
         log.info(f"Processing object: {config_map.metadata.name}")
 
-        build_anns, other_anns = group_annotations(config_map.metadata.annotations)
-        jsonnet_build_args = evaluate_jsonnet_build_annotations(build_anns)
+        anns = group_annotations(config_map.metadata.annotations)
+        jsonnet_build_args = evaluate_jsonnet_build_annotations(anns.build)
 
         labels.update(config_map.metadata.labels or {})
-        annotations.update(other_anns or {})
+        annotations.update(anns.other)
+        translator_annotations.update(anns.translator)
 
         if config_map.data is not None:
             try:
@@ -548,7 +582,7 @@ def regenerate_jsonnet_resources(args_, label_selector):
     if label_selector == args_.jsonnet_rules_selector:
         create_rules_object(args_, jsons, labels, annotations)
     else:
-        create_dashboard_cm(args_, jsons, labels, annotations)
+        create_dashboard_cm(args_, jsons, labels, annotations, translator_annotations)
 
 
 def watch_changes(args_, label_selector):

@@ -15,6 +15,11 @@ metadata:
         }
       ext_vars: '{"dashboard_name": "Example dashboard with ext_vars 2"}'
       max_trace: "8"
+      # Grafana dashboards excluded from update
+      grafana_dashboards_skip_update: |-
+        [
+          "excludme.json"
+        ]
       grafana_label: "grafana_dashboard=1"
 data:
   example.libsonnet: |-
@@ -32,7 +37,8 @@ data:
         .addTarget(prometheus.target('rate(process_cpu_seconds_total{job="apiserver"}[5m])'))
         + {gridPos: { x: x, y: y, w: 6, h: 6 }}
     }
-
+  excludme.jsonnet: |-
+    { "test": "exludeme" }
   example-dashboard-ext.jsonnet: |-
     local grafana = import 'grafonnet/grafana.libsonnet';
     local lib = import 'example.libsonnet';

@@ -35,14 +35,15 @@ def get_parser():
         "--target_namespace",
         type=str,
         default=defaults["target_namespace"],
-        help=f'Namespace for generated objects, default: {defaults["target_namespace"]}',
+        help="Namespace for generated objects, "
+        f'default: {defaults["target_namespace"]}',
     )
 
     parser.add_argument(
         "--jsonnet_dashboards_selector",
         type=str,
         default=defaults["jsonnet_dashboards_selector"],
-        help=f"Selector of dashboards jsonnet config maps in format: "
+        help="Selector of dashboards jsonnet config maps in format: "
         f'`<label>=<value>`, default: {defaults["jsonnet_dashboards_selector"]}',
     )
 
@@ -50,7 +51,7 @@ def get_parser():
         "--jsonnet_rules_selector",
         type=str,
         default=defaults["jsonnet_rules_selector"],
-        help=f"Selector of rules jsonnet config maps in format: "
+        help="Selector of rules jsonnet config maps in format: "
         f'`<label>=<value>`, default: {defaults["jsonnet_rules_selector"]}',
     )
 
@@ -58,7 +59,7 @@ def get_parser():
         "--grafana_dashboards_cm_name",
         type=str,
         default=defaults["grafana_dashboards_cm_name"],
-        help=f"Name of config map with generated dashboards, "
+        help="Name of config map with generated dashboards, "
         f'default: {defaults["grafana_dashboards_cm_name"]}',
     )
 
@@ -66,7 +67,7 @@ def get_parser():
         "--prometheus_rules_object_name",
         type=str,
         default=defaults["prometheus_rules_object_name"],
-        help=f"Name of prometheus rules object with generated rules, "
+        help="Name of prometheus rules object with generated rules, "
         f'default: {defaults["prometheus_rules_object_name"]}',
     )
 
@@ -74,7 +75,7 @@ def get_parser():
         "--grafana_label",
         type=str,
         default=defaults["grafana_label"],
-        help=f"Field in annotations, which defines label of grafana dashboards "
+        help="Field in annotations, which defines label of grafana dashboards "
         f'in format: `<label>=<value>`, default: {defaults["grafana_label"]}',
     )
 
@@ -82,7 +83,7 @@ def get_parser():
         "--prometheus_label",
         type=str,
         default=defaults["prometheus_label"],
-        help=f"Field in annotations, which defines label of prometheus rules "
+        help="Field in annotations, which defines label of prometheus rules "
         f'in format: `<label>=<value>`, default: {defaults["prometheus_label"]}',
     )
 

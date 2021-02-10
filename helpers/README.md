@@ -15,7 +15,7 @@ Prerequisites
 
 Create kind cluster
 ```bash
-kind create cluster --image kindest/node:v1.19.1
+kind create cluster --config helpers/kind_cluster_config.yaml --image kindest/node:v1.20.2
 ```
 
 Translator can run without installation to cluster (but there has to be accessible cluster config).
@@ -27,7 +27,7 @@ jb init
 cd ..
 
 pip3 install .
-python3 translator/main.py --dev --libsonnet https://github.com/grafana/grafonnet-lib/grafonnet@ff69572caf78c3163980d0d723c85a722eab73d9
+python3 translator/main.py --dev --libsonnet https://github.com/grafana/grafonnet-lib/grafonnet@005390f0207ffa4a8ae0d1afb253b7585ff7beca
 ```
 
 Generate example grafana dashboard
