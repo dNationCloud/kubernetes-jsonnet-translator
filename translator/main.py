@@ -49,6 +49,9 @@ SUPPORTED_BUILD_ARGS = [
 ]
 SUPPORTED_TRANSLATOR_ARGS = [
     "grafana_dashboards_skip_update",
+    "grafana_label",
+    "prometheus_label",
+    "jsonnet_filename",
 ]
 
 
@@ -142,45 +145,39 @@ def evaluate_jsonnet_build_annotations(annotations):
     return evaluated_args
 
 
-def update_metadata(
-    user_labels, user_annotations, old_label_selector, new_selector_annotation
-):
-    """Updates labels and annotations.
+def update_labels(user_labels, jsonnet_selector, target_selector):
+    """Updates user labels.
 
-    Deletes old label selector from labels and adds new one,
-    defined in annotations by new_selector_annotation. Other labels
-    and annotations are just copied.
+    Deletes jsonnet selector from labels and adds new one,
+    defined in annotations by target_selector. Other labels
+    are just copied.
 
     Args:
         user_labels (dict):  Labels of kubernetes object.
-        user_annotations (dict): Annotations of kubernetes object.
-        old_label_selector (str): Label to be removed.
+        jsonnet_selector (str): Jsonnet selector to be removed.
             (in format '<label>=<key>')
-        new_selector_annotation (str): Key in annotations, where new
-            label selector is stored.
+        target_selector (str): Target label selector.
 
     Returns:
-        (dict, dict): updated labels and annotations.
+        dict: updated labels.
     """
     try:
-        key, _ = old_label_selector.split("=")
+        key, _ = jsonnet_selector.split("=")
     except ValueError:
-        log.error(f"Label selector is invalid: {old_label_selector}")
+        log.error(f"Jsonnet selector is invalid: {jsonnet_selector}")
     else:
         user_labels.pop(key, None)
 
     try:
-        new_label_selector = user_annotations[new_selector_annotation]
-        key, value = new_label_selector.split("=")
-    except KeyError:
-        log.error(f"Annotations not containing field {new_selector_annotation}")
+        key, value = target_selector.split("=")
+    except AttributeError:
+        log.error(f"Annotations not containing target selector field")
     except ValueError:
-        log.error(f"Label for kubernetes object is invalid: {new_selector_annotation}")
+        log.error(f"Label for kubernetes object is invalid: {target_selector}")
     else:
-        user_annotations.pop(new_selector_annotation)
         user_labels[key] = value
 
-    return user_labels, user_annotations
+    return user_labels
 
 
 @retry(
@@ -237,7 +234,7 @@ def delete_generated_resources(args_):
     stop=stop_after_attempt(6),
     retry_error_callback=utils.after_retry,
 )
-def create_rules_object(args_, jsons, user_labels, user_annotations):
+def create_rules_object(args_, jsons, user_labels, user_annotations, translator_annotations):
     """Creates prometheusrule object.
 
     Creates or replaces prometheusrule object from json rules with provided metadata.
@@ -248,11 +245,14 @@ def create_rules_object(args_, jsons, user_labels, user_annotations):
             (filename, dict from json).
         user_labels (dict):  Labels of kubernetes object.
         user_annotations (dict): Annotations of kubernetes object.
+        translator_annotations (dict): Translator specific annotations.
 
     Returns:
         None
     """
     coa = client.CustomObjectsApi()
+
+    target_rules_selector = translator_annotations.get(args_.prometheus_label, None)
 
     name = args_.prometheus_rules_object_name
     namespace = args_.target_namespace
@@ -261,15 +261,12 @@ def create_rules_object(args_, jsons, user_labels, user_annotations):
     plural = "prometheusrules"
 
     labels = {}
-    annotations = {}
     if len(jsons) > 0:
-        labels, annotations = update_metadata(
+        labels = update_labels(
             user_labels,
-            user_annotations,
             args_.jsonnet_rules_selector,
-            args_.prometheus_label,
+            target_rules_selector,
         )
-
     groups = []
     for filename, json_data in jsons:
         groups.extend(json_data["groups"])
@@ -278,7 +275,7 @@ def create_rules_object(args_, jsons, user_labels, user_annotations):
         "name": name,
         "namespace": namespace,
         "labels": labels,
-        "annotations": annotations,
+        "annotations": user_annotations,
     }
 
     prom_rules_object = {
@@ -345,6 +342,8 @@ def create_dashboard_cm(
     v1 = client.CoreV1Api()
 
     dashboards_skip = translator_annotations.get("grafana_dashboards_skip_update", [])
+    target_dashboards_selector = translator_annotations.get(args_.grafana_label, None)
+
     name = args_.grafana_dashboards_cm_name
     namespace = args_.target_namespace
     cms = v1.list_namespaced_config_map(
@@ -353,13 +352,11 @@ def create_dashboard_cm(
 
     # Compose ConfigMap
     labels = {}
-    annotations = {}
     if len(jsons) > 0:
-        labels, annotations = update_metadata(
+        labels = update_labels(
             user_labels,
-            user_annotations,
             args_.jsonnet_dashboards_selector,
-            args_.grafana_label,
+            target_dashboards_selector,
         )
     data = {}
     for filename, json_data in jsons:
@@ -375,7 +372,7 @@ def create_dashboard_cm(
             name=name,
             namespace=namespace,
             labels=labels,
-            annotations=annotations,
+            annotations=user_annotations,
         ),
     )
     # Create/Update ConfigMap
@@ -559,7 +556,7 @@ def regenerate_jsonnet_resources(args_, label_selector):
 
         if config_map.binary_data is not None:
             try:
-                main_jsonnet = config_map.metadata.annotations["jsonnet_filename"]
+                main_jsonnet = anns.translator["jsonnet_filename"]
             except KeyError:
                 log.error(
                     f"ConfigMap {config_map.metadata.name} contains jsonnet archive, "
@@ -580,7 +577,7 @@ def regenerate_jsonnet_resources(args_, label_selector):
                     return
 
     if label_selector == args_.jsonnet_rules_selector:
-        create_rules_object(args_, jsons, labels, annotations)
+        create_rules_object(args_, jsons, labels, annotations, translator_annotations)
     else:
         create_dashboard_cm(args_, jsons, labels, annotations, translator_annotations)
 
