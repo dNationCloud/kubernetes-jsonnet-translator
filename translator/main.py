@@ -12,15 +12,11 @@
 import os
 import _jsonnet
 import json
-import utils
-import logger
 import time
 import ast
 
 from multiprocessing import Process
-from arg_parser import get_parser
 from dataclasses import dataclass, field
-from exceptions import JsonnetConfigMapError, RetryException
 from subprocess import Popen, PIPE, TimeoutExpired
 from kubernetes import client, config, watch
 from kubernetes.client.rest import ApiException
@@ -34,6 +30,10 @@ from tenacity import (
     wait_exponential,
 )
 
+from . import utils
+from . import logger
+from .exceptions import JsonnetConfigMapError, RetryException
+from .arg_parser import get_parser
 
 log = logger.get_logger()
 

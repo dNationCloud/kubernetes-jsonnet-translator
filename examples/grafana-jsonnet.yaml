@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  namespace: default
+#  namespace: default
   name: jsonnet-cm
   labels:
     grafana_dashboard_jsonnet: "1"
