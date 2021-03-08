@@ -1,0 +1,23 @@
+groups:
+  - name: JSONNET_RULE
+    rules:
+      - alert: TEST_ALERTNodesHealthHigh
+        annotations:
+          message: '"TEST: Node Health Low%'
+        expr: round(sum(kube_node_info) by (job, node) / (sum(kube_node_info) by (job,
+          node) + sum(kube_node_spec_unschedulable) by (job, node) + sum(kube_node_status_condition{condition="DiskPressure",
+          status="true"}) by (job, node) + sum(kube_node_status_condition{condition="MemoryPressure",
+          status="true"}) by (job, node) ) * 100) < 95
+        for: 5m
+        labels:
+          severity: critical
+      - alert: TEST_ALERTNodesHealthHigh
+        annotations:
+          message: '"TEST: Node Health Low%'
+        expr: round(sum(kube_node_info) by (job, node) / (sum(kube_node_info) by (job,
+          node) + sum(kube_node_spec_unschedulable) by (job, node) + sum(kube_node_status_condition{condition="DiskPressure",
+          status="true"}) by (job, node) + sum(kube_node_status_condition{condition="MemoryPressure",
+          status="true"}) by (job, node) ) * 100) < 99
+        for: 5m
+        labels:
+          severity: warning
