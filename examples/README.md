@@ -17,7 +17,7 @@ helm install translator ./chart
 ```bash
 kubectl apply -f examples/grafana-jsonnet.yaml
 # see results
-kubectl desribe cm grafana-dashboards-generated
+kubectl describe cm grafana-dashboards-generated
 ```
 
 - Example of prometheus rule
@@ -25,7 +25,7 @@ kubectl desribe cm grafana-dashboards-generated
 kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/release-0.42/example/prometheus-operator-crd/monitoring.coreos.com_prometheusrules.yaml
 kubectl apply -f examples/prom-rule-jsonnet.yaml
 # see results
-kubectl desribe prometheusrule prometheus-rules-generated
+kubectl describe prometheusrule prometheus-rules-generated
 ```
 
 More examples can be found in [examples](examples) folder.
