@@ -14,10 +14,10 @@ import hashlib
 import patoolib
 import base64
 import binascii
-import logger
 import shutil
 from datetime import datetime
 
+from . import logger
 
 log = logger.get_logger()
 
