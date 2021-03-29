@@ -27,7 +27,7 @@ jb init
 cd ..
 
 pip3 install .
-python3 translator/main.py --dev --libsonnet https://github.com/grafana/grafonnet-lib/grafonnet@005390f0207ffa4a8ae0d1afb253b7585ff7beca
+python3 translator/main.py --dev --libsonnet https://github.com/grafana/grafonnet-lib/grafonnet@daad85cf3fad3580e58029414630e29956aefe21
 ```
 
 Generate example grafana dashboard

@@ -15,7 +15,7 @@ RUN pip3 install /app
 
 FROM python:3.8-slim
 
-LABEL Version="0.2.0"
+LABEL Version="0.3.0"
 LABEL Vendor="dNation"
 LABEL Description="Container generates json resources from jsonnet resources (grafana dashboards, prometheus rules)"
 
@@ -32,7 +32,7 @@ COPY --from=python-builder /opt/venv /opt/venv
 
 RUN mkdir jsonnet_libs && cd jsonnet_libs && \
     jb init && \
-    jb install https://github.com/grafana/grafonnet-lib/grafonnet@005390f0207ffa4a8ae0d1afb253b7585ff7beca
+    jb install https://github.com/grafana/grafonnet-lib/grafonnet@daad85cf3fad3580e58029414630e29956aefe21
 
 RUN chmod -R 777 /app
 

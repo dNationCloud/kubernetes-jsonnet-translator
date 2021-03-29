@@ -91,16 +91,17 @@ jobs:
 
     - name: Run End-to-End test
       run: |
-        helm install translator ./chart
+        set -x
+        helm install --set image.tag=test translator ./chart
         kubectl apply -f ci/grafana-jsonnet.yaml
         kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/release-0.42/example/prometheus-operator-crd/monitoring.coreos.com_prometheusrules.yaml
         kubectl apply -f ci/prom-rule-jsonnet.yaml
 
-        timeout 30s bash -c 'until kubectl get cm grafana-dashboards-generated &> /dev/null; do sleep 2; done'
+        timeout 30s bash -c 'until kubectl get cm grafana-dashboards-generated &> /dev/null; do sleep 2; done' || (echo "Failed: configmap grafana-dashboards-generated not found" >&2; false)
         kubectl describe cm grafana-dashboards-generated | grep -A 1 -- '----' | grep -v -- '----' > /tmp/grafana-dashboard.json
         diff /tmp/grafana-dashboard.json ci/grafana-dashboard.json
 
-        timeout 30s bash -c 'until kubectl get prometheusrule prometheus-rules-generated &> /dev/null; do sleep 2; done'
+        timeout 30s bash -c 'until kubectl get prometheusrule prometheus-rules-generated &> /dev/null; do sleep 2; done' || (echo "Failed: prometheusrule prometheus-rules-generated not found" >&2; false)
         kubectl get prometheusrule prometheus-rules-generated -o yaml | ~/.local/bin/yq .spec > /tmp/prometheusrule-spec.json
         ~/.local/bin/yq . ci/prometheusrule-spec.yaml > ci/prometheusrule-spec.json
         diff /tmp/prometheusrule-spec.json ci/prometheusrule-spec.json
