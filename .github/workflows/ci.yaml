@@ -120,3 +120,11 @@ jobs:
         kubectl get prometheusrule prometheus-rules-generated -o yaml | ~/.local/bin/yq .spec > /tmp/prometheusrule-spec.json
         ~/.local/bin/yq . ci/prometheusrule-spec.yaml > ci/prometheusrule-spec.json
         diff /tmp/prometheusrule-spec.json ci/prometheusrule-spec.json
+
+        kubectl create namespace test-namespace
+        helm upgrade --set image.tag=test,image.args='{--source_namespace,test-namespace,--target_namespace,test-namespace}' translator ./chart
+        kubectl apply -f ci/grafana-jsonnet-namespaced.yaml
+
+        timeout 30s bash -c 'until kubectl get cm -n test-namespace grafana-dashboards-generated &> /dev/null; do sleep 2; done' || (echo "Failed: configmap grafana-dashboards-generated not found" >&2; false)
+        number_of_dashboards=$(kubectl get cm -n test-namespace | grep grafana-dashboards-generated | awk '{print $2}')
+        [[ $number_of_dashboards == "1" ]] || (echo "Failed: Number of generated dashboards is diffrent from expected." >&2; false)

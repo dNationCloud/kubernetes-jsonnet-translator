@@ -36,6 +36,14 @@ def get_parser():
     )
 
     parser.add_argument(
+        "--source_namespace",
+        type=str,
+        default=defaults["source_namespace"],
+        help="Namespace for object discovery"
+        f'default: {defaults["source_namespace"]}',
+    )
+
+    parser.add_argument(
         "--target_namespace",
         type=str,
         default=defaults["target_namespace"],

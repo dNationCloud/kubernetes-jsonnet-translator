@@ -85,19 +85,23 @@ def parse_json_with_files(input_filepath):
         log.error(f"Error when reading {input_filepath}, error: {e}")
 
 
-def get_config_maps(label_selector):
-    """Retrieves config maps from all namespaces labeled by label_selector.
+def get_config_maps(label_selector, namespace):
+    """Retrieves config maps labeled by label_selector.
 
     Args:
         label_selector (str): Label with value from config map
             (example: "grafana_dashboard_jsonnet=1").
+        namespace (str): Source namespace name. '*' indicates all namespaces.
 
     Returns:
         client.models.v1_config_map_list.V1ConfigMapList:
             Kubernetes client class that contains config maps.
     """
     v1 = client.CoreV1Api()
-    config_maps = v1.list_config_map_for_all_namespaces(label_selector=label_selector)
+    if namespace == '*':
+        config_maps = v1.list_config_map_for_all_namespaces(label_selector=label_selector)
+    else:
+        config_maps = v1.list_namespaced_config_map(namespace, label_selector=label_selector)
     return config_maps
 
 
@@ -136,7 +140,6 @@ def evaluate_jsonnet_build_annotations(annotations):
     evaluated_args = {}
     for key, value in annotations.items():
         try:
-            print(value)
             evaluated_arg = ast.literal_eval(value)
             _jsonnet.evaluate_snippet("dummy", "{}", **{key: evaluated_arg})
             evaluated_args[key] = evaluated_arg
@@ -535,7 +538,7 @@ def regenerate_jsonnet_resources(args_, label_selector):
     annotations = {}
     translator_annotations = {}
 
-    config_maps = get_config_maps(label_selector)
+    config_maps = get_config_maps(label_selector, args_.source_namespace)
     for config_map in config_maps.items:
 
         log.info(f"Processing object: {config_map.metadata.name}")
@@ -601,14 +604,24 @@ def watch_changes(args_, label_selector):
     v1 = client.CoreV1Api()
     w = watch.Watch()
 
-    config_maps = get_config_maps(label_selector)
+    config_maps = get_config_maps(label_selector, args_.source_namespace)
     resource_version = config_maps.metadata.resource_version
 
-    for event in w.stream(
-        v1.list_config_map_for_all_namespaces,
-        label_selector=label_selector,
-        resource_version=resource_version,
-    ):
+    if args_.source_namespace == '*':
+        watch_stream = w.stream(
+            v1.list_config_map_for_all_namespaces,
+            label_selector=label_selector,
+            resource_version=resource_version,
+        )
+    else:
+        watch_stream = w.stream(
+            v1.list_namespaced_config_map,
+            namespace=args_.source_namespace,
+            label_selector=label_selector,
+            resource_version=resource_version,
+        )
+
+    for event in watch_stream:
         log.info(f"Event: {event['type']} {event['object'].metadata.name}")
         regenerate_jsonnet_resources(args_, label_selector)
 
