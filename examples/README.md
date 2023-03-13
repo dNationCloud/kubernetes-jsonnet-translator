@@ -17,7 +17,7 @@ helm install translator ./chart
 ```bash
 kubectl apply -f examples/grafana-jsonnet.yaml
 # see results
-kubectl describe cm grafana-dashboards-generated
+kubectl describe cm grafana-dashboards-generated-example-dashboard
 ```
 
 - Example of prometheus rule
