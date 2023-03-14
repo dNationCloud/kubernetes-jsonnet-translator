@@ -92,6 +92,14 @@ def get_parser():
     )
 
     parser.add_argument(
+        "--json_dashboards_selector",
+        type=str,
+        default=defaults["json_dashboards_selector"],
+        help="Selector of the json dashboards config maps in format: "
+        f'`<label>=<value>`, default: {defaults["json_dashboards_selector"]}',
+    )
+
+    parser.add_argument(
         "--prometheus_label",
         type=str,
         default=defaults["prometheus_label"],
