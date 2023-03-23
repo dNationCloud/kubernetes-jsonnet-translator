@@ -29,7 +29,7 @@ on:
 
 jobs:
   lint-chart:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -44,7 +44,7 @@ jobs:
         config: .github/ct.yaml
 
   build-image-install-chart-run-e2e-test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         k8s:
@@ -85,7 +85,7 @@ jobs:
       run: git fetch --prune --unshallow
 
     - name: Create kind ${{ matrix.k8s }} cluster
-      uses: helm/kind-action@v1.0.0
+      uses: helm/kind-action@v1.2.0
       with:
         node_image: kindest/node:${{ matrix.k8s }}
 
@@ -95,7 +95,7 @@ jobs:
         kind load docker-image dnationcloud/kubernetes-jsonnet-translator:test --name $cluster_name
 
     - name: Run chart-testing (install)
-      uses: helm/chart-testing-action@v1.0.0
+      uses: helm/chart-testing-action@v2.1.0
       with:
         command: install
         config: .github/ct.yaml
@@ -112,19 +112,19 @@ jobs:
         kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/release-0.42/example/prometheus-operator-crd/monitoring.coreos.com_prometheusrules.yaml
         kubectl apply -f ci/prom-rule-jsonnet.yaml
 
-        timeout 30s bash -c 'until kubectl get cm grafana-dashboards-generated &> /dev/null; do sleep 2; done' || (echo "Failed: configmap grafana-dashboards-generated not found" >&2; false)
-        kubectl describe cm grafana-dashboards-generated | grep -A 1 -- '----' | grep -v -- '----' > /tmp/grafana-dashboard.json
+        timeout 30s bash -c 'until kubectl get cm grafana-dashboards-generated-example-dashboard &> /dev/null; do sleep 2; done' || (echo "Failed: configmap grafana-dashboards-generated-example-dashboard not found" >&2; false)
+        kubectl describe cm grafana-dashboards-generated-example-dashboard | grep -A 1 -- '----' | grep -v -- '----' > /tmp/grafana-dashboard.json
         diff /tmp/grafana-dashboard.json ci/grafana-dashboard.json
 
         timeout 30s bash -c 'until kubectl get prometheusrule prometheus-rules-generated &> /dev/null; do sleep 2; done' || (echo "Failed: prometheusrule prometheus-rules-generated not found" >&2; false)
-        kubectl get prometheusrule prometheus-rules-generated -o yaml | ~/.local/bin/yq .spec > /tmp/prometheusrule-spec.json
-        ~/.local/bin/yq . ci/prometheusrule-spec.yaml > ci/prometheusrule-spec.json
+        kubectl get prometheusrule prometheus-rules-generated -o yaml | /opt/hostedtoolcache/ct/v3.4.0/x86_64/venv/bin/yq .spec > /tmp/prometheusrule-spec.json
+        /opt/hostedtoolcache/ct/v3.4.0/x86_64/venv/bin/yq . ci/prometheusrule-spec.yaml > ci/prometheusrule-spec.json
         diff /tmp/prometheusrule-spec.json ci/prometheusrule-spec.json
 
         kubectl create namespace test-namespace
         helm upgrade --set image.tag=test,image.args='{--source_namespace,test-namespace,--target_namespace,test-namespace}' translator ./chart
         kubectl apply -f ci/grafana-jsonnet-namespaced.yaml
 
-        timeout 30s bash -c 'until kubectl get cm -n test-namespace grafana-dashboards-generated &> /dev/null; do sleep 2; done' || (echo "Failed: configmap grafana-dashboards-generated not found" >&2; false)
-        number_of_dashboards=$(kubectl get cm -n test-namespace | grep grafana-dashboards-generated | awk '{print $2}')
+        timeout 30s bash -c 'until kubectl get cm -n test-namespace grafana-dashboards-generated-example-dashboard2 &> /dev/null; do sleep 2; done' || (echo "Failed: configmap grafana-dashboards-generated-example-dashboard2 not found" >&2; false)
+        number_of_dashboards=$(kubectl get cm -n test-namespace | grep grafana-dashboards-generated-example-dashboard2 | awk '{print $2}')
         [[ $number_of_dashboards == "1" ]] || (echo "Failed: Number of generated dashboards is diffrent from expected." >&2; false)

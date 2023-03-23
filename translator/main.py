@@ -99,9 +99,14 @@ def get_config_maps(label_selector, namespace):
     """
     v1 = client.CoreV1Api()
     if namespace == '*':
-        config_maps = v1.list_config_map_for_all_namespaces(label_selector=label_selector)
+        config_maps = v1.list_config_map_for_all_namespaces(
+            label_selector=label_selector
+        )
     else:
-        config_maps = v1.list_namespaced_config_map(namespace, label_selector=label_selector)
+        config_maps = v1.list_namespaced_config_map(
+            namespace,
+            label_selector=label_selector
+        )
     return config_maps
 
 
@@ -153,7 +158,7 @@ def evaluate_jsonnet_build_annotations(annotations):
     return evaluated_args
 
 
-def update_labels(user_labels, jsonnet_selector, target_selector):
+def update_labels(user_labels, jsonnet_selector, target_selector, json_selector=""):
     """Updates user labels.
 
     Deletes jsonnet selector from labels and adds new one,
@@ -165,6 +170,8 @@ def update_labels(user_labels, jsonnet_selector, target_selector):
         jsonnet_selector (str): Jsonnet selector to be removed.
             (in format '<label>=<key>')
         target_selector (str): Target label selector.
+        json_selector (str): Json label selector.
+            (in format '<label>=<key>')
 
     Returns:
         dict: updated labels.
@@ -179,11 +186,19 @@ def update_labels(user_labels, jsonnet_selector, target_selector):
     try:
         key, value = target_selector.split("=")
     except AttributeError:
-        log.error(f"Annotations not containing target selector field")
+        log.error(f'{"Annotations not containing target selector field"}')
     except ValueError:
         log.error(f"Label for kubernetes object is invalid: {target_selector}")
     else:
         user_labels[key] = value
+
+    if json_selector:
+        try:
+            key, value = json_selector.split("=")
+        except ValueError:
+            log.error(f"Label for kubernetes object is invalid: {json_selector}")
+        else:
+            user_labels[key] = value
 
     return user_labels
 
@@ -209,12 +224,32 @@ def delete_generated_resources(args_):
     v1 = client.CoreV1Api()
 
     rule_name = args_.prometheus_rules_object_name
-    dash_name = args_.grafana_dashboards_cm_name
     namespace = args_.target_namespace
     group = "monitoring.coreos.com"
     version = "v1"
     plural = "prometheusrules"
     retry = False
+
+    cms = v1.list_namespaced_config_map(
+        namespace, label_selector=args_.json_dashboards_selector
+    )
+
+    for i in range(len(cms.items)):
+        retry = False
+        dash_name = cms.items[i].metadata.name
+        try:
+            v1.delete_namespaced_config_map(
+                dash_name,
+                namespace,
+                grace_period_seconds=10
+            )
+            log.info(f"Config map {dash_name} deleted.")
+        except ApiException as e:
+            log.error(f"Error when deleting config map {dash_name}, error {e}")
+            retry = True
+
+        if retry:
+            raise RetryException
 
     try:
         coa.delete_namespaced_custom_object(
@@ -223,13 +258,6 @@ def delete_generated_resources(args_):
         log.info(f"Prometheus rules {rule_name} deleted.")
     except ApiException as e:
         log.error(f"Error when deleting prometheus rule {rule_name}, error {e}")
-        retry = True
-
-    try:
-        v1.delete_namespaced_config_map(dash_name, namespace, grace_period_seconds=10)
-        log.info(f"Config map {dash_name} deleted.")
-    except ApiException as e:
-        log.error(f"Error when deleting config map {dash_name}, error {e}")
         retry = True
 
     if retry:
@@ -242,7 +270,12 @@ def delete_generated_resources(args_):
     stop=stop_after_attempt(6),
     retry_error_callback=utils.after_retry,
 )
-def create_rules_object(args_, jsons, user_labels, user_annotations, translator_annotations):
+def create_rules_object(
+        args_,
+        jsons,
+        user_labels,
+        user_annotations,
+        translator_annotations):
     """Creates prometheusrule object.
 
     Creates or replaces prometheusrule object from json rules with provided metadata.
@@ -352,12 +385,16 @@ def create_dashboard_cm(
     dashboards_skip = translator_annotations.get("grafana_dashboards_skip_update", [])
     target_dashboards_selector = translator_annotations.get(args_.grafana_label, None)
 
-    name = args_.grafana_dashboards_cm_name
     namespace = args_.target_namespace
     cms = v1.list_namespaced_config_map(
-        namespace, field_selector=f"metadata.name={name}"
+        namespace, label_selector=args_.json_dashboards_selector
     )
 
+    generated_dashboards_names = []
+    for k in range(len(cms.items)):
+        generated_dashboards_names.append(cms.items[k].metadata.name)
+
+    generated_dashboards_names_to_delete = generated_dashboards_names.copy()
     # Compose ConfigMap
     labels = {}
     if len(jsons) > 0:
@@ -365,39 +402,62 @@ def create_dashboard_cm(
             user_labels,
             args_.jsonnet_dashboards_selector,
             target_dashboards_selector,
+            args_.json_dashboards_selector,
         )
-    data = {}
+
     for filename, json_data in jsons:
         if cms.items and filename in dashboards_skip:
             log.info(f"Update of {filename} dashboard skipped")
             continue
 
+        data = {}
         data[filename] = json.dumps(json_data)
+        # name = grafana-dashboards-generated-<filename-without-.json>
+        name = "-".join([args_.grafana_dashboards_cm_name, filename[:-5]])
 
-    configmap = client.V1ConfigMap(
-        data=data,
-        metadata=client.V1ObjectMeta(
-            name=name,
-            namespace=namespace,
-            labels=labels,
-            annotations=user_annotations,
-        ),
-    )
-    # Create/Update ConfigMap
-    if cms.items:
-        try:
-            v1.replace_namespaced_config_map(name, namespace, configmap)
-        except ApiException as e:
-            log.error(f"Error when replacing config map {name}, error {e}")
-            raise RetryException
-        log.info(f"Dashboards resource {name} updated")
-    else:
-        try:
-            v1.create_namespaced_config_map(namespace, configmap)
-        except ApiException as e:
-            log.error(f"Error when creating config map {name}, error {e}")
-            raise RetryException
-        log.info(f"Dashboards resource {name} created")
+        configmap = client.V1ConfigMap(
+            data=data,
+            metadata=client.V1ObjectMeta(
+                name=name,
+                namespace=namespace,
+                labels=labels,
+                annotations=user_annotations,
+            ),
+        )
+
+        # Create/Update ConfigMap
+        if cms.items and name in generated_dashboards_names:
+            # Remove all dashboards from the list, which are in jsonnet
+            # and needs to be updated
+            generated_dashboards_names_to_delete.remove(name)
+
+            try:
+                v1.replace_namespaced_config_map(name, namespace, configmap)
+            except ApiException as e:
+                log.error(f"Error when replacing config map {name}, error {e}")
+                raise RetryException
+            log.info(f"Dashboards resource {name} updated")
+        else:
+            try:
+                v1.create_namespaced_config_map(namespace, configmap)
+            except ApiException as e:
+                log.error(f"Error when creating config map {name}, error {e}")
+                raise RetryException
+            log.info(f"Dashboards resource {name} created")
+
+    # Delete ConfigMap if the dashboard was removed in jsonnet
+    if len(generated_dashboards_names_to_delete) > 0:
+        for name in generated_dashboards_names_to_delete:
+            try:
+                v1.delete_namespaced_config_map(
+                    name,
+                    namespace,
+                    grace_period_seconds=10
+                )
+            except ApiException as e:
+                log.error(f"Error when deleting config map {name}, error {e}")
+                raise RetryException
+            log.info(f"Dashboards resource {name} deleted")
 
 
 def process_cm_data(data, ext_libs=[], user_args={}):

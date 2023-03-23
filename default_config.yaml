@@ -16,6 +16,7 @@
 target_namespace: "default"
 source_namespace: "*"
 jsonnet_dashboards_selector: "grafana_dashboard_jsonnet=1"
+json_dashboards_selector: "translator_json_dashboard=1"
 grafana_label: "grafana_label"
 jsonnet_rules_selector: "prometheus_rule_jsonnet=1"
 prometheus_label: "prometheus_label"

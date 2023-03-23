@@ -34,7 +34,7 @@ Generate example grafana dashboard
 ```
 kubectl apply -f examples/grafana-jsonnet.yaml
 # see results
-kubectl desribe cm grafana-dashboards-generated
+kubectl desribe cm grafana-dashboards-generated-example-dashboard
 ```
 If everything was installed correctly, described config map should contain grafana dashboard in JSON.
 
