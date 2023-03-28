@@ -412,8 +412,11 @@ def create_dashboard_cm(
 
         data = {}
         data[filename] = json.dumps(json_data)
-        # name = grafana-dashboards-generated-<filename-without-.json>
-        name = "-".join([args_.grafana_dashboards_cm_name, filename[:-5]])
+        # name = grafana-dashboards-generated-<filename-without-.json>,
+        # which is converted to valid DNS Subdomain Name
+        name = utils.convert_name_to_valid_dns_subdomain_name(
+            "-".join([args_.grafana_dashboards_cm_name, filename[:-5]])
+        )
 
         configmap = client.V1ConfigMap(
             data=data,

@@ -21,6 +21,7 @@ import binascii
 import logger
 import shutil
 from datetime import datetime
+import re
 
 
 log = logger.get_logger()
@@ -171,3 +172,28 @@ def extract_archive_data(archive_data, archive_name, folder):
         log.error(f"Error when extracting {archive_name}, error: {e}")
 
     remove_file("./", archive_name)
+
+
+def convert_name_to_valid_dns_subdomain_name(name):
+    """Convert name to a valid DNS Subdomain Name as defined in RFC 1123
+       because most resource types in kubernetes require it.
+       https://kubernetes.io/docs/concepts/overview/working-with-objects/names/
+
+    Args:
+        name (str): name that need to be converted into valid format
+
+    Returns:
+        Name that can be used as a valid DNS subdomain name
+    """
+    name = re.sub(r'[^a-zA-Z0-9]+', '-', name).lower()
+    # name must contain no more than 253 characters
+    if len(name) > 253:
+        name = name[:253]
+    # name must start with an alphanumeric character
+    if name and name[0] == "-":
+        name = name[1:]
+    # name must end with an alphanumeric character
+    if name and name[-1] == "-":
+        name = name[:-1]
+
+    return name
