@@ -18,6 +18,12 @@ Create kind cluster
 kind create cluster --config helpers/kind_cluster_config.yaml --image kindest/node:v1.20.2
 ```
 
+Create prometheus rule CRD
+- optional, if you do not create prometheus rule CRD you will see some 404 errors in translator logs
+```bash
+kubectl apply -f https://raw.githubusercontent.com/prometheus-community/helm-charts/main/charts/kube-prometheus-stack/charts/crds/crds/crd-prometheusrules.yaml
+```
+
 Translator can run without installation to cluster (but there has to be accessible cluster config).
 Install [jsonnet bundler](https://github.com/jsonnet-bundler/jsonnet-bundler) and run:
 ```
@@ -34,7 +40,7 @@ Generate example grafana dashboard
 ```
 kubectl apply -f examples/grafana-jsonnet.yaml
 # see results
-kubectl desribe cm grafana-dashboards-generated-example-dashboard
+kubectl describe cm grafana-dashboards-generated-example-dashboard
 ```
 If everything was installed correctly, described config map should contain grafana dashboard in JSON.
 

@@ -5,7 +5,7 @@ RUN go get github.com/jsonnet-bundler/jsonnet-bundler/cmd/jb
 
 FROM python:3.8 AS python-builder
 RUN apt-get update
-
+RUN apt-get install -y golang-go
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
@@ -15,7 +15,7 @@ RUN pip3 install /app
 
 FROM python:3.8-slim
 
-LABEL Version="1.0.1"
+LABEL Version="1.0.2"
 LABEL Vendor="dNation"
 LABEL Description="Container generates json resources from jsonnet resources (grafana dashboards, prometheus rules)"
 

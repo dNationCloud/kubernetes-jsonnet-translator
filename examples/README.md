@@ -28,4 +28,4 @@ kubectl apply -f examples/prom-rule-jsonnet.yaml
 kubectl describe prometheusrule prometheus-rules-generated
 ```
 
-More examples can be found in [examples](examples) folder.
+More examples can be found in this folder.

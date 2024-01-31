@@ -14,7 +14,6 @@
 #
 
 import os
-import _jsonnet
 import json
 import utils
 import logger
@@ -142,11 +141,14 @@ def evaluate_jsonnet_build_annotations(annotations):
     Returns:
         dict: Valid jsonnet build arguments with evaluated values.
     """
+    # FIXME: quick and dirty workaround for issue https://github.com/google/go-jsonnet/issues/484
+    import _gojsonnet
+
     evaluated_args = {}
     for key, value in annotations.items():
         try:
             evaluated_arg = ast.literal_eval(value)
-            _jsonnet.evaluate_snippet("dummy", "{}", **{key: evaluated_arg})
+            _gojsonnet.evaluate_snippet("dummy", "{}", **{key: evaluated_arg})
             evaluated_args[key] = evaluated_arg
         except TypeError as e:
             log.error(f"Build argument from annotations {key} is invalid, error: {e}")
@@ -482,6 +484,9 @@ def process_cm_data(data, ext_libs=[], user_args={}):
     Raises:
         JsonnetConfigMapError: Raised if jsonnet evaluation fails.
     """
+    # FIXME: quick and dirty workaround for issue https://github.com/google/go-jsonnet/issues/484
+    import _gojsonnet
+
     libsonnet_folder = "./libsonnets"
     jsons = []
 
@@ -495,7 +500,7 @@ def process_cm_data(data, ext_libs=[], user_args={}):
 
         try:
             jsonnet_code = data[dataKey]
-            json_ = _jsonnet.evaluate_snippet(
+            json_ = _gojsonnet.evaluate_snippet(
                 dataKey, jsonnet_code, jpathdir=ext_libs, **user_args
             )
         except RuntimeError as e:
@@ -537,6 +542,9 @@ def process_cm_binary_data(name, data, main_jsonnet, ext_libs=[], user_args={}):
         JsonnetConfigMapError: Raised if jsonnet evaluation fails or
             wrong archive format is provided.
     """
+    # FIXME: quick and dirty workaround for issue https://github.com/google/go-jsonnet/issues/484
+    import _gojsonnet
+
     tmp_folder_name = f"jsonnet_archive_{name}"
     tmp_file_name = f"generated_from_archive_{name}.json"
 
@@ -562,7 +570,7 @@ def process_cm_binary_data(name, data, main_jsonnet, ext_libs=[], user_args={}):
 
         jsonnet_filepath = os.path.join(tmp_folder_name, main_jsonnet)
         try:
-            json_ = _jsonnet.evaluate_file(
+            json_ = _gojsonnet.evaluate_file(
                 jsonnet_filepath, jpathdir=ext_libs, **user_args
             )
         except RuntimeError as e:
@@ -700,6 +708,11 @@ def watch_loop(args_, label_selector):
     Return:
         None
     """
+    try:
+        config.load_kube_config()
+    except config.config_exception.ConfigException:
+        config.load_incluster_config()
+
     initial_run = True
     while True:
         try:
@@ -795,7 +808,9 @@ def watch_for_changes(args_):
     dashboard_proc.daemon = True
     dashboard_proc.start()
 
-    rule_proc = Process(target=watch_loop, args=(args_, args_.jsonnet_rules_selector))
+    rule_proc = Process(
+        target=watch_loop, args=(args_, args_.jsonnet_rules_selector)
+    )
     rule_proc.daemon = True
     rule_proc.start()
 
@@ -835,11 +850,6 @@ def main(args_):
         os.environ["LIBSONNET_PATH"] = "./jsonnet_libs"
 
     install_dependencies(args.libsonnet)
-
-    try:
-        config.load_kube_config()
-    except config.config_exception.ConfigException:
-        config.load_incluster_config()
 
     if args.delete_resources:
         delete_generated_resources(args)
