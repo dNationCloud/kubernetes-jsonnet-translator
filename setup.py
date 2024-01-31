@@ -17,7 +17,7 @@ from setuptools import setup, find_packages
 
 
 install_requires = [
-    "jsonnet==0.16.*",
+    "gojsonnet==0.17.*",
     "kubernetes==12.0.*",
     "patool==1.12",
     "urllib3==1.25.*",
@@ -31,7 +31,7 @@ setup(
     description="Generates json resources from jsonnet resources",
     author="dnation",
     author_email="david.suba@dnation.cloud",
-    version="0.3.0",
+    version="1.0.2",
     python_requires=">=3.7",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
