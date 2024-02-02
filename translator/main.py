@@ -222,6 +222,11 @@ def delete_generated_resources(args_):
     Returns:
         None
     """
+    try:
+        config.load_kube_config()
+    except config.config_exception.ConfigException:
+        config.load_incluster_config()
+
     coa = client.CustomObjectsApi()
     v1 = client.CoreV1Api()
 
