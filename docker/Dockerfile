@@ -1,7 +1,7 @@
-FROM golang:1.15.2-alpine3.12 AS go-builder
+FROM golang:1.25-alpine AS go-builder
 RUN apk update && apk upgrade && \
     apk add --no-cache bash git
-RUN go get github.com/jsonnet-bundler/jsonnet-bundler/cmd/jb
+RUN go install github.com/jsonnet-bundler/jsonnet-bundler/cmd/jb@v0.6.0
 
 FROM python:3.8 AS python-builder
 RUN apt-get update
@@ -32,7 +32,8 @@ COPY --from=python-builder /opt/venv /opt/venv
 
 RUN mkdir jsonnet_libs && cd jsonnet_libs && \
     jb init && \
-    jb install https://github.com/grafana/grafonnet-lib/grafonnet@daad85cf3fad3580e58029414630e29956aefe21
+    jb install https://github.com/grafana/grafonnet-lib/grafonnet@daad85cf3fad3580e58029414630e29956aefe21 && \
+    jb install https://github.com/thelastpickle/grafonnet-polystat-panel@275a48de57afdac0d72219d82863d8ab8bd0e682
 
 RUN chmod -R 777 /app
 
