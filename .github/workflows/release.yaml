@@ -25,7 +25,7 @@ on:
 
 jobs:
   release:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -54,14 +54,14 @@ jobs:
         python -m pip install --upgrade pip
         pip install chartpress==0.7.0
 
-    - name: Publish Chart to the remote dNationCloud helm repository
-      run: chartpress --publish-chart --tag ${{ steps.version.outputs.chart }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.CICD_TOKEN }}
+#    - name: Publish Chart to the remote dNationCloud helm repository
+#      run: chartpress --publish-chart --tag ${{ steps.version.outputs.chart }}
+#      env:
+#        GITHUB_TOKEN: ${{ secrets.CICD_TOKEN }}
 
-    - name: Tag branch
-      uses: anothrNick/github-tag-action@1.39.0
-      env:
-        GITHUB_TOKEN: ${{ secrets.CICD_TOKEN }}
-        CUSTOM_TAG: 'v${{ steps.version.outputs.chart }}'
-        RELEASE_BRANCHES: main
+#    - name: Tag branch
+#      uses: anothrNick/github-tag-action@1.39.0
+#      env:
+#        GITHUB_TOKEN: ${{ secrets.CICD_TOKEN }}
+#        CUSTOM_TAG: 'v${{ steps.version.outputs.chart }}'
+#        RELEASE_BRANCHES: main
