@@ -15,7 +15,7 @@ RUN pip3 install /app
 
 FROM python:3.8-slim
 
-LABEL Version="1.0.3"
+LABEL Version="1.0.4"
 LABEL Vendor="dNation"
 LABEL Description="Container generates json resources from jsonnet resources (grafana dashboards, prometheus rules)"
 
