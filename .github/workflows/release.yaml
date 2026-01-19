@@ -55,10 +55,10 @@ jobs:
         python -m pip install --upgrade pip
         pip install chartpress==0.7.0
 
-    - name: Publish Chart to the remote dNationCloud helm repository
-      run: chartpress --publish-chart --tag ${{ steps.version.outputs.chart }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.CICD_TOKEN }}
+#    - name: Publish Chart to the remote dNationCloud helm repository
+#      run: chartpress --publish-chart --tag ${{ steps.version.outputs.chart }}
+#      env:
+#        GITHUB_TOKEN: ${{ secrets.CICD_TOKEN }}
 
 #    - name: Tag branch
 #      uses: anothrNick/github-tag-action@1.39.0

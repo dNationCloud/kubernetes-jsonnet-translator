@@ -54,10 +54,10 @@ jobs:
         expected: ${{ steps.version.outputs.version }}
         actual: ${{ steps.helm-app-version.outputs.app-version }}
 
-#    - name: Configure Git
-#      run: |
-#        git config --global user.name "$GITHUB_ACTOR"
-#        git config --global user.email "$GITHUB_ACTOR@users.noreply.github.com"
+    - name: Configure Git
+      run: |
+        git config --global user.name "$GITHUB_ACTOR"
+        git config --global user.email "$GITHUB_ACTOR@users.noreply.github.com"
 #    - name: Tag branch
 #      uses: anothrNick/github-tag-action@1.39.0
 #      env:
