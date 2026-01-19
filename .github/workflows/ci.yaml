@@ -48,8 +48,8 @@ jobs:
     strategy:
       matrix:
         k8s:
-          - v1.20.2
-          - v1.22.1
+          - v1.33.7
+          - v1.34.3
     needs:
       - lint-chart
     steps:
