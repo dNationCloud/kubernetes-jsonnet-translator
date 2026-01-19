@@ -28,10 +28,10 @@ on:
 
 jobs:
   tag:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Fetch history
       run: git fetch --prune --unshallow
@@ -40,13 +40,13 @@ jobs:
       id: version
       run: |
         version=$(grep 'LABEL Version=' docker/Dockerfile | sed 's/LABEL Version="\(.*\)".*/\1/')
-        echo "::set-output name=version::$version"
+        echo "version=$version" >> "$GITHUB_OUTPUT"
 
     - name: Get helm chart application version
       id: helm-app-version
       run: |
         app=$(grep "appVersion" chart/Chart.yaml | head -1 | awk '{print $2}')
-        echo "::set-output name=app-version::$app"
+        echo "app-version=$app" >> "$GITHUB_OUTPUT"
 
     - name: Check if helm chart application version equals docker version
       uses: nick-invision/assert-action@v1
@@ -54,13 +54,13 @@ jobs:
         expected: ${{ steps.version.outputs.version }}
         actual: ${{ steps.helm-app-version.outputs.app-version }}
 
-    - name: Configure Git
-      run: |
-        git config --global user.name "$GITHUB_ACTOR"
-        git config --global user.email "$GITHUB_ACTOR@users.noreply.github.com"
-    - name: Tag branch
-      uses: anothrNick/github-tag-action@1.39.0
-      env:
-        GITHUB_TOKEN: ${{ secrets.CICD_TOKEN }}
-        CUSTOM_TAG: 'image-v${{ steps.version.outputs.version }}'
-        RELEASE_BRANCHES: main
+#    - name: Configure Git
+#      run: |
+#        git config --global user.name "$GITHUB_ACTOR"
+#        git config --global user.email "$GITHUB_ACTOR@users.noreply.github.com"
+#    - name: Tag branch
+#      uses: anothrNick/github-tag-action@1.39.0
+#      env:
+#        GITHUB_TOKEN: ${{ secrets.CICD_TOKEN }}
+#        CUSTOM_TAG: 'image-v${{ steps.version.outputs.version }}'
+#        RELEASE_BRANCHES: main

@@ -25,10 +25,10 @@ on:
 
 jobs:
   release:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Fetch history
       run: git fetch --prune --unshallow
@@ -36,8 +36,9 @@ jobs:
     - name: Get helm chart version
       id: version
       run: |
-        chart=$(grep "version" chart/Chart.yaml | head -1 | awk '{print $2}')
-        echo "::set-output name=chart::$chart"
+       chart=$(grep "version" chart/Chart.yaml | head -1 | awk '{print $2}')
+       echo "chart=$chart" >> "$GITHUB_OUTPUT"
+
 
     - name: Configure Git
       run: |
@@ -45,7 +46,7 @@ jobs:
         git config --global user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: 3.6
 
@@ -59,9 +60,9 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.CICD_TOKEN }}
 
-    - name: Tag branch
-      uses: anothrNick/github-tag-action@1.39.0
-      env:
-        GITHUB_TOKEN: ${{ secrets.CICD_TOKEN }}
-        CUSTOM_TAG: 'v${{ steps.version.outputs.chart }}'
-        RELEASE_BRANCHES: main
+#    - name: Tag branch
+#      uses: anothrNick/github-tag-action@1.39.0
+#      env:
+#        GITHUB_TOKEN: ${{ secrets.CICD_TOKEN }}
+#        CUSTOM_TAG: 'v${{ steps.version.outputs.chart }}'
+#        RELEASE_BRANCHES: main
