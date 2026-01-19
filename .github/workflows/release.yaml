@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Fetch history
       run: git fetch --prune --unshallow
@@ -36,8 +36,9 @@ jobs:
     - name: Get helm chart version
       id: version
       run: |
-        chart=$(grep "version" chart/Chart.yaml | head -1 | awk '{print $2}')
-        echo "::set-output name=chart::$chart"
+       chart=$(grep "version" chart/Chart.yaml | head -1 | awk '{print $2}')
+       echo "chart=$chart" >> "$GITHUB_OUTPUT"
+
 
     - name: Configure Git
       run: |
@@ -45,7 +46,7 @@ jobs:
         git config --global user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: 3.6
 

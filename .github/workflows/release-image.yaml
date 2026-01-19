@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Fetch history
       run: git fetch --prune --unshallow
@@ -40,13 +40,13 @@ jobs:
       id: version
       run: |
         version=$(grep 'LABEL Version=' docker/Dockerfile | sed 's/LABEL Version="\(.*\)".*/\1/')
-        echo "::set-output name=version::$version"
+        echo "version=$version" >> "$GITHUB_OUTPUT"
 
     - name: Get helm chart application version
       id: helm-app-version
       run: |
         app=$(grep "appVersion" chart/Chart.yaml | head -1 | awk '{print $2}')
-        echo "::set-output name=app-version::$app"
+        echo "app-version=$app" >> "$GITHUB_OUTPUT"
 
     - name: Check if helm chart application version equals docker version
       uses: nick-invision/assert-action@v1
