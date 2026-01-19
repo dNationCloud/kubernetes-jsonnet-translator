@@ -29,39 +29,39 @@ on:
 
 jobs:
   lint-chart:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Fetch history
       run: git fetch --prune --unshallow
 
     - name: Run chart-testing (lint)
-      uses: helm/chart-testing-action@v1.0.0
+      uses: helm/chart-testing-action@v2.8.0
       with:
         command: lint
         config: .github/ct.yaml
 
   build-image-install-chart-run-e2e-test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         k8s:
-          - v1.17.11
-          - v1.19.1
+          - v1.32.1
+          - v1.33.7
     needs:
       - lint-chart
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Set up Docker Buildx
       id: buildx
-      uses: docker/setup-buildx-action@v1
+      uses: docker/setup-buildx-action@v3
 
     - name: Cache Docker layers
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: /tmp/.buildx-cache
         key: ${{ runner.os }}-buildx-${{ github.sha }}
@@ -70,7 +70,7 @@ jobs:
 
     - name: Build image
       id: docker_build
-      uses: docker/build-push-action@v2
+      uses: docker/build-push-action@v6
       with:
         context: ./
         file: ./docker/Dockerfile
@@ -85,7 +85,7 @@ jobs:
       run: git fetch --prune --unshallow
 
     - name: Create kind ${{ matrix.k8s }} cluster
-      uses: helm/kind-action@v1.2.0
+      uses: helm/kind-action@v1.13.0
       with:
         node_image: kindest/node:${{ matrix.k8s }}
 
@@ -95,7 +95,7 @@ jobs:
         kind load docker-image dnationcloud/kubernetes-jsonnet-translator:test --name $cluster_name
 
     - name: Run chart-testing (install)
-      uses: helm/chart-testing-action@v2.1.0
+      uses: helm/chart-testing-action@v2.8.0
       with:
         command: install
         config: .github/ct.yaml
@@ -117,8 +117,8 @@ jobs:
         diff /tmp/grafana-dashboard.json ci/grafana-dashboard.json
 
         timeout 30s bash -c 'until kubectl get prometheusrule prometheus-rules-generated &> /dev/null; do sleep 2; done' || (echo "Failed: prometheusrule prometheus-rules-generated not found" >&2; false)
-        kubectl get prometheusrule prometheus-rules-generated -o yaml | /opt/hostedtoolcache/ct/v3.4.0/x86_64/venv/bin/yq .spec > /tmp/prometheusrule-spec.json
-        /opt/hostedtoolcache/ct/v3.4.0/x86_64/venv/bin/yq . ci/prometheusrule-spec.yaml > ci/prometheusrule-spec.json
+        kubectl get prometheusrule prometheus-rules-generated -o yaml | yq '.spec' > /tmp/prometheusrule-spec.json
+        yq '.' ci/prometheusrule-spec.yaml > ci/prometheusrule-spec.json
         diff /tmp/prometheusrule-spec.json ci/prometheusrule-spec.json
 
         kubectl create namespace test-namespace

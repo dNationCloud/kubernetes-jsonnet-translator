@@ -25,10 +25,10 @@ on:
 
 jobs:
   release:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Fetch history
       run: git fetch --prune --unshallow
@@ -37,7 +37,7 @@ jobs:
       id: version
       run: |
         chart=$(grep "version" chart/Chart.yaml | head -1 | awk '{print $2}')
-        echo "::set-output name=chart::$chart"
+        echo "chart=$chart" >> "$GITHUB_OUTPUT"
 
     - name: Configure Git
       run: |
@@ -45,14 +45,14 @@ jobs:
         git config --global user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
-        python-version: 3.6
+        python-version: 3.12.12
 
     - name: Install Chartpress
       run: |
         python -m pip install --upgrade pip
-        pip install chartpress==0.7.0
+        pip install chartpress==2.3.0
 
     - name: Publish Chart to the remote dNationCloud helm repository
       run: chartpress --publish-chart --tag ${{ steps.version.outputs.chart }}
@@ -60,7 +60,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.CICD_TOKEN }}
 
     - name: Tag branch
-      uses: anothrNick/github-tag-action@1.39.0
+      uses: anothrNick/github-tag-action@1.75.0
       env:
         GITHUB_TOKEN: ${{ secrets.CICD_TOKEN }}
         CUSTOM_TAG: 'v${{ steps.version.outputs.chart }}'
