@@ -28,7 +28,7 @@ on:
 
 jobs:
   tag:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -58,9 +58,9 @@ jobs:
       run: |
         git config --global user.name "$GITHUB_ACTOR"
         git config --global user.email "$GITHUB_ACTOR@users.noreply.github.com"
-    - name: Tag branch
-      uses: anothrNick/github-tag-action@1.39.0
-      env:
-        GITHUB_TOKEN: ${{ secrets.CICD_TOKEN }}
-        CUSTOM_TAG: 'image-v${{ steps.version.outputs.version }}'
-        RELEASE_BRANCHES: main
+#    - name: Tag branch
+#      uses: anothrNick/github-tag-action@1.39.0
+#      env:
+#        GITHUB_TOKEN: ${{ secrets.CICD_TOKEN }}
+#        CUSTOM_TAG: 'image-v${{ steps.version.outputs.version }}'
+#        RELEASE_BRANCHES: main

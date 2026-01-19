@@ -29,7 +29,7 @@ on:
 
 jobs:
   lint-chart:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -44,7 +44,7 @@ jobs:
         config: .github/ct.yaml
 
   build-image-install-chart-run-e2e-test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         k8s:
