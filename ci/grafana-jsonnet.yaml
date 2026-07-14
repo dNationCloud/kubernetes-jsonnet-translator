@@ -24,33 +24,27 @@ metadata:
     grafana_label: "grafana_dashboard=1"
 data:
   example-dashboard.jsonnet: |-
-    local grafana = import 'grafonnet/grafana.libsonnet';
-    local dashboard = grafana.dashboard;
-    local prometheus = grafana.prometheus;
-    local template = grafana.template;
-    local statPanel = grafana.statPanel;
+    local g = import 'github.com/grafana/grafonnet/gen/grafonnet-latest/main.libsonnet';
+    local dashboard = g.dashboard;
+    local datasource = g.dashboard.variable.datasource;
+    local statPanel = g.panel.stat;
+    local prometheus = g.query.prometheus;
 
-      local upCount =
-        statPanel.new(
-          title='Up',
-          datasource='$datasource',
-        )
-        .addTarget(prometheus.target('sum(up{job="apiserver"})'));
+    local upCount =
+      statPanel.new('Up')
+      + statPanel.queryOptions.withTargets([
+        prometheus.new('$datasource', 'sum(up{job="apiserver"})'),
+      ])
+      + { gridPos: { x: 0, y: 0, w: 6, h: 6 } };
 
-      local datasourceTemplate =
-        template.datasource(
-          query='prometheus',
-          name='datasource',
-          current=null,
-          label='Datasource',
-        );
+    local datasourceTemplate =
+      datasource.new('datasource', 'prometheus')
+      + datasource.generalOptions.withLabel('Datasource');
 
-      dashboard.new(
-        'Example Dashboard',
-        editable=true,
-        refresh='10s',
-        time_from='now-5m',
-        uid='example-dashboard',
-      )
-      .addTemplates([datasourceTemplate, ])
-      .addPanels([upCount{ gridPos: { x: 0, y: 0, w: 6, h: 6 } }])
+    dashboard.new('Example Dashboard')
+    + dashboard.withUid('example-dashboard')
+    + dashboard.withEditable(true)
+    + dashboard.withRefresh('10s')
+    + dashboard.time.withFrom('now-5m')
+    + dashboard.withVariables([datasourceTemplate])
+    + dashboard.withPanels([upCount])
