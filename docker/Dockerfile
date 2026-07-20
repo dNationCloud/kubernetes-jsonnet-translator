@@ -1,13 +1,13 @@
-FROM golang:1.25-alpine AS go-builder
+FROM golang:1.26-alpine AS go-builder
 RUN apk update && apk upgrade && \
     apk add --no-cache bash git
 RUN go install github.com/jsonnet-bundler/jsonnet-bundler/cmd/jb@v0.6.0
 
 FROM python:3.8 AS python-builder
 RUN apt-get update && apt-get install -y wget
-# gojsonnet (go-jsonnet >= 0.20) needs a modern Go toolchain to build from source;
+# gojsonnet (go-jsonnet >= 0.22) needs a modern Go toolchain to build from source;
 # Debian's packaged golang-go is too old, so fetch an official Go release instead.
-ARG GO_VERSION=1.22.5
+ARG GO_VERSION=1.26.5
 RUN ARCH=$(dpkg --print-architecture) && \
     wget -q "https://go.dev/dl/go${GO_VERSION}.linux-${ARCH}.tar.gz" && \
     tar -C /usr/local -xzf "go${GO_VERSION}.linux-${ARCH}.tar.gz" && \
@@ -21,7 +21,7 @@ RUN pip3 install /app
 
 FROM python:3.8-slim
 
-LABEL Version="2.0.0"
+LABEL Version="2.0.1"
 LABEL Vendor="dNation"
 LABEL Description="Container generates json resources from jsonnet resources (grafana dashboards, prometheus rules)"
 

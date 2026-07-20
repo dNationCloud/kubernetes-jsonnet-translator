@@ -17,7 +17,7 @@ from setuptools import setup, find_packages
 
 
 install_requires = [
-    "gojsonnet==0.20.*",
+    "gojsonnet==0.22.*",
     "kubernetes==12.0.*",
     "patool==1.12",
     "urllib3==1.25.*",
