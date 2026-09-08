@@ -13,7 +13,7 @@
 # limitations under the License.
 #
 
-name: Tag code for docker image to release
+name: Publish and tag docker image to release
 
 on:
   push:
@@ -25,6 +25,9 @@ on:
     - 'translator/**'
     - 'setup.py'
     - 'default_config.yaml'
+
+env:
+  IMAGE: dnationcloud/kubernetes-jsonnet-translator
 
 jobs:
   tag:
@@ -53,6 +56,53 @@ jobs:
       with:
         expected: ${{ steps.version.outputs.version }}
         actual: ${{ steps.helm-app-version.outputs.app-version }}
+
+    # This workflow also runs for pushes that touch the image sources without
+    # bumping the version label, so never overwrite an already released tag.
+    - name: Check if docker image version is already published
+      id: published
+      run: |
+        http_code=$(curl -s -o /dev/null -w '%{http_code}' \
+          "https://hub.docker.com/v2/repositories/${IMAGE}/tags/${{ steps.version.outputs.version }}")
+        if [ "$http_code" = "200" ]; then
+          echo "${IMAGE}:${{ steps.version.outputs.version }} is already published, skipping build and push"
+          echo "publish=false" >> "$GITHUB_OUTPUT"
+        else
+          echo "publish=true" >> "$GITHUB_OUTPUT"
+        fi
+
+    # The arm64 image is emulated here, the hosted runner is amd64 only.
+    # QEMU has to be registered before buildx starts its builder.
+    - name: Set up QEMU
+      if: steps.published.outputs.publish == 'true'
+      uses: docker/setup-qemu-action@v3
+      with:
+        platforms: arm64
+
+    - name: Set up Docker Buildx
+      id: buildx
+      if: steps.published.outputs.publish == 'true'
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to Docker Hub
+      if: steps.published.outputs.publish == 'true'
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Build and push image (linux/amd64,linux/arm64)
+      if: steps.published.outputs.publish == 'true'
+      uses: docker/build-push-action@v6
+      with:
+        context: ./
+        file: ./docker/Dockerfile
+        builder: ${{ steps.buildx.outputs.name }}
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: |
+          ${{ env.IMAGE }}:${{ steps.version.outputs.version }}
+          ${{ env.IMAGE }}:latest
 
     - name: Configure Git
       run: |
