@@ -100,6 +100,14 @@ def get_parser():
     )
 
     parser.add_argument(
+        "--json_rules_selector",
+        type=str,
+        default=defaults["json_rules_selector"],
+        help="Selector of the generated prometheus rules objects in format: "
+        f'`<label>=<value>`, default: {defaults["json_rules_selector"]}',
+    )
+
+    parser.add_argument(
         "--prometheus_label",
         type=str,
         default=defaults["prometheus_label"],

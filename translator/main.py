@@ -54,6 +54,7 @@ SUPPORTED_TRANSLATOR_ARGS = [
     "grafana_dashboards_skip_update",
     "grafana_label",
     "prometheus_label",
+    "prometheus_rules_object_name",
     "jsonnet_filename",
 ]
 
@@ -267,6 +268,23 @@ def delete_generated_resources(args_):
         log.error(f"Error when deleting prometheus rule {rule_name}, error {e}")
         retry = True
 
+    # Other objects, written by the `prometheus_rules_object_name` annotation
+    rules_objects = coa.list_namespaced_custom_object(
+        group, version, namespace, plural, label_selector=args_.json_rules_selector
+    )
+    for rules_object in rules_objects["items"]:
+        name = rules_object["metadata"]["name"]
+        if name == rule_name:
+            continue
+        try:
+            coa.delete_namespaced_custom_object(
+                group, version, namespace, plural, name, grace_period_seconds=10
+            )
+            log.info(f"Prometheus rules {name} deleted.")
+        except ApiException as e:
+            log.error(f"Error when deleting prometheus rule {name}, error {e}")
+            retry = True
+
     if retry:
         raise RetryException
 
@@ -279,6 +297,7 @@ def delete_generated_resources(args_):
 )
 def create_rules_object(
         args_,
+        name,
         jsons,
         user_labels,
         user_annotations,
@@ -289,6 +308,7 @@ def create_rules_object(
 
     Args:
         args_ (argparse.Namespace): Args from ArgumentParser.
+        name (str): Name of the PrometheusRule object.
         jsons (array of (str, dict)): Generated rules in format
             (filename, dict from json).
         user_labels (dict):  Labels of kubernetes object.
@@ -302,7 +322,6 @@ def create_rules_object(
 
     target_rules_selector = translator_annotations.get(args_.prometheus_label, None)
 
-    name = args_.prometheus_rules_object_name
     namespace = args_.target_namespace
     group = "monitoring.coreos.com"
     version = "v1"
@@ -314,6 +333,7 @@ def create_rules_object(
             user_labels,
             args_.jsonnet_rules_selector,
             target_rules_selector,
+            args_.json_rules_selector,
         )
     groups = []
     for filename, json_data in jsons:
@@ -609,10 +629,15 @@ def regenerate_jsonnet_resources(args_, label_selector):
         "./libsonnets",
     ]
 
-    jsons = []
-    labels = {}
-    annotations = {}
-    translator_annotations = {}
+    rules = label_selector == args_.jsonnet_rules_selector
+
+    # Generated objects by name. Rules go to the default PrometheusRule object or
+    # to the one named by the `prometheus_rules_object_name` annotation.
+    # Dashboards have one output (key "dashboards").
+    outputs = {}
+    if rules:
+        # default object is always written, as before
+        outputs[args_.prometheus_rules_object_name] = _new_output()
 
     config_maps = get_config_maps(label_selector, args_.source_namespace)
     for config_map in config_maps.items:
@@ -622,13 +647,23 @@ def regenerate_jsonnet_resources(args_, label_selector):
         anns = group_annotations(config_map.metadata.annotations)
         jsonnet_build_args = evaluate_jsonnet_build_annotations(anns.build)
 
-        labels.update(config_map.metadata.labels or {})
-        annotations.update(anns.other)
-        translator_annotations.update(anns.translator)
+        if rules:
+            target = utils.convert_name_to_valid_dns_subdomain_name(
+                anns.translator.get(
+                    "prometheus_rules_object_name", args_.prometheus_rules_object_name
+                )
+            )
+        else:
+            target = "dashboards"
+        output = outputs.setdefault(target, _new_output())
+
+        output["labels"].update(config_map.metadata.labels or {})
+        output["annotations"].update(anns.other)
+        output["translator_annotations"].update(anns.translator)
 
         if config_map.data is not None:
             try:
-                jsons.extend(
+                output["jsons"].extend(
                     process_cm_data(
                         config_map.data,
                         external_libraries_paths,
@@ -648,7 +683,7 @@ def regenerate_jsonnet_resources(args_, label_selector):
                 )
             else:
                 try:
-                    jsons.extend(
+                    output["jsons"].extend(
                         process_cm_binary_data(
                             config_map.metadata.name,
                             config_map.binary_data,
@@ -660,10 +695,74 @@ def regenerate_jsonnet_resources(args_, label_selector):
                 except JsonnetConfigMapError:
                     return
 
-    if label_selector == args_.jsonnet_rules_selector:
-        create_rules_object(args_, jsons, labels, annotations, translator_annotations)
+    if rules:
+        for name, output in outputs.items():
+            create_rules_object(
+                args_,
+                name,
+                output["jsons"],
+                output["labels"],
+                output["annotations"],
+                output["translator_annotations"],
+            )
+        delete_stale_rules_objects(args_, outputs.keys())
     else:
-        create_dashboard_cm(args_, jsons, labels, annotations, translator_annotations)
+        output = outputs.get("dashboards", _new_output())
+        create_dashboard_cm(
+            args_,
+            output["jsons"],
+            output["labels"],
+            output["annotations"],
+            output["translator_annotations"],
+        )
+
+
+@retry(
+    retry=retry_if_exception_type(RetryException),
+    wait=wait_exponential(multiplier=5, min=5, max=60),  # 2^x * multiplier
+    stop=stop_after_attempt(6),
+    retry_error_callback=utils.after_retry,
+)
+def delete_stale_rules_objects(args_, names):
+    """Deletes generated prometheusrule objects no config map writes to any more.
+
+    Same as removed dashboards in `create_dashboard_cm`, e.g. after the config map
+    with the `prometheus_rules_object_name` annotation was deleted.
+
+    Args:
+        args_ (argparse.Namespace): Args from ArgumentParser.
+        names (iterable of str): Names of the objects written in this run.
+
+    Returns:
+        None
+    """
+    coa = client.CustomObjectsApi()
+
+    namespace = args_.target_namespace
+    group = "monitoring.coreos.com"
+    version = "v1"
+    plural = "prometheusrules"
+
+    rules_objects = coa.list_namespaced_custom_object(
+        group, version, namespace, plural, label_selector=args_.json_rules_selector
+    )
+    for rules_object in rules_objects["items"]:
+        name = rules_object["metadata"]["name"]
+        if name in names:
+            continue
+        try:
+            coa.delete_namespaced_custom_object(
+                group, version, namespace, plural, name, grace_period_seconds=10
+            )
+        except ApiException as e:
+            log.error(f"Error when deleting prometheus rule {name}, error {e}")
+            raise RetryException
+        log.info(f"Rules resource {name} deleted")
+
+
+def _new_output():
+    """Empty accumulator of one generated object."""
+    return {"jsons": [], "labels": {}, "annotations": {}, "translator_annotations": {}}
 
 
 def watch_changes(args_, label_selector):

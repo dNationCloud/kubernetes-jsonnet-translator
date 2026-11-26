@@ -37,3 +37,26 @@ Possible arguments and their defaults can be found [here](default_config.yaml). 
     
 Other configuration can be done by annotations of jsonnet config maps. See [example](examples/grafana-jsonnet-ext.yaml#L11). \
 Supported jsonnet build keyword arguments can be found [here](https://jsonnet.org/ref/bindings.html) (except callbacks).
+
+#### Rules in separate PrometheusRule objects
+
+By default the rules of all jsonnet rule config maps are merged into one
+PrometheusRule object (`--prometheus_rules_object_name`). A rule config map with
+the annotation `prometheus_rules_object_name` is written to the object of that
+name instead, together with the other config maps that name the same object.
+Labels and the `prometheus_label` annotation are taken per object, so rules can
+be split between rule evaluators, e.g. one object for Prometheus and one for
+Thanos Ruler. See [example](ci/prom-rule-jsonnet-object-name.yaml):
+
+```yaml
+metadata:
+  labels:
+    prometheus_rule_jsonnet: "1"
+  annotations:
+    prometheus_label: "prometheus_rule_pve=1"
+    prometheus_rules_object_name: "prometheus-rules-proxmox-generated"
+```
+
+Together with `prometheus_label` it means: put the rules of this config map into
+the object `prometheus-rules-proxmox-generated` and label that object
+`prometheus_rule_pve=1`. When no config map names the object any more, it is deleted.
