@@ -121,6 +121,20 @@ jobs:
         yq '.' ci/prometheusrule-spec.yaml > ci/prometheusrule-spec.json
         diff /tmp/prometheusrule-spec.json ci/prometheusrule-spec.json
 
+        # Config map with prometheus_rules_object_name goes to its own object with its own label
+        kubectl apply -f ci/prom-rule-jsonnet-object-name.yaml
+        timeout 30s bash -c 'until kubectl get prometheusrule prometheus-rules-proxmox-generated &> /dev/null; do sleep 2; done' || (echo "Failed: prometheusrule prometheus-rules-proxmox-generated not found" >&2; false)
+        [[ $(kubectl get prometheusrule prometheus-rules-proxmox-generated -o jsonpath='{.metadata.labels.prometheus_rule_pve}') == "1" ]] || (echo "Failed: proxmox rules object has no prometheus_rule_pve label" >&2; false)
+        [[ $(kubectl get prometheusrule prometheus-rules-proxmox-generated -o jsonpath='{.spec.groups[*].name}') == "proxmox" ]] || (echo "Failed: proxmox rules object has wrong groups" >&2; false)
+        [[ -z $(kubectl get prometheusrule prometheus-rules-generated -o jsonpath='{.metadata.labels.prometheus_rule_pve}') ]] || (echo "Failed: default rules object got the proxmox label" >&2; false)
+        kubectl get prometheusrule prometheus-rules-generated -o yaml | yq '.spec' > /tmp/prometheusrule-spec.json
+        diff /tmp/prometheusrule-spec.json ci/prometheusrule-spec.json
+
+        # Object is deleted when no config map writes to it any more
+        kubectl delete -f ci/prom-rule-jsonnet-object-name.yaml
+        timeout 30s bash -c 'while kubectl get prometheusrule prometheus-rules-proxmox-generated &> /dev/null; do sleep 2; done' || (echo "Failed: prometheusrule prometheus-rules-proxmox-generated not deleted" >&2; false)
+        kubectl get prometheusrule prometheus-rules-generated &> /dev/null || (echo "Failed: default prometheusrule deleted" >&2; false)
+
         kubectl create namespace test-namespace
         helm upgrade --set image.tag=test,image.args='{--source_namespace,test-namespace,--target_namespace,test-namespace}' translator ./chart
         kubectl apply -f ci/grafana-jsonnet-namespaced.yaml
